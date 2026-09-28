@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<meta name="theme-color" content="#0a0a0f">
+<title>Shells - CYBERDEMONS C2</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=JetBrains+Mono:wght@300;400;500;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root{
+  --cyan:#00fff0;--magenta:#ff00ff;--green:#39ff14;
+  --red:#ff0040;--yellow:#ffea00;--bg:#05050a;
+  --surface:rgba(8,8,20,0.85);--card:rgba(12,12,30,0.9);
+  --border:rgba(0,255,240,0.12);--border-h:rgba(0,255,240,0.35);
+  --dim:#5a5a7a;--bright:#d0d0ff;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  font-family:'JetBrains Mono','Share Tech Mono',monospace;
+  background:var(--bg);color:var(--bright);
+  min-height:100vh;position:relative;
+}
+body::before{
+  content:'';position:fixed;inset:0;z-index:0;
+  background:linear-gradient(rgba(0,255,240,0.015) 1px,transparent 1px),
+              linear-gradient(90deg,rgba(0,255,240,0.015) 1px,transparent 1px);
+  background-size:50px 50px;pointer-events:none;
+}
+body::after{
+  content:'';position:fixed;inset:0;z-index:0;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.03) 2px,rgba(0,0,0,0.03) 4px);
+  pointer-events:none;animation:scanlines 8s linear infinite;
+}
+@keyframes scanlines{0%{transform:translateY(0);}100%{transform:translateY(4px);}}
+body.has-bg::before{display:none;}
+body.has-bg::after{opacity:0.5;}
+
+/* === TOP BAR === */
+.topbar{
+  padding:10px 20px;background:var(--surface);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:12px;
+  position:sticky;top:0;z-index:10;
+  backdrop-filter:blur(20px);
+}
+.topbar::after{
+  content:'';position:absolute;bottom:-1px;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--cyan),var(--magenta),var(--cyan),transparent);
+  opacity:0.4;
+}
+.topbar-logo{
+  width:30px;height:30px;border:1px solid var(--cyan);
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;color:var(--cyan);flex-shrink:0;
+  clip-path:polygon(15% 0%,100% 0%,85% 100%,0% 100%);
+  background:rgba(0,255,240,0.05);overflow:hidden;
+}
+.topbar-logo img{width:100%;height:100%;object-fit:cover;}
+.topbar-title{
+  font-family:'Orbitron',monospace;font-size:15px;font-weight:900;
+  color:var(--cyan);letter-spacing:3px;
+}
+.topbar-title span{color:var(--magenta);}
+.topbar-title small{
+  font-size:9px;color:var(--dim);font-family:'JetBrains Mono',monospace;
+  letter-spacing:0;margin-left:8px;
+}
+.topbar-back{
+  margin-left:auto;text-decoration:none;font-size:10px;
+  padding:6px 14px;border-radius:4px;font-weight:700;
+  color:var(--dim);border:1px solid var(--border);
+  font-family:'JetBrains Mono',monospace;text-transform:uppercase;
+  letter-spacing:1px;transition:all .2s;
+}
+.topbar-back:hover{color:var(--cyan);border-color:rgba(0,255,240,0.3);background:rgba(0,255,240,0.05);}
+
+/* === DESKTOP SPLIT LAYOUT === */
+.split{
+  display:grid;grid-template-columns:1fr 1fr;gap:16px;
+  padding:20px;position:relative;z-index:1;
+  max-width:1200px;margin:0 auto;
+}
+@media(max-width:900px){.split{grid-template-columns:1fr;}}
+
+/* === CYBER CARD === */
+.cc{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:8px;padding:20px;margin-bottom:16px;
+  position:relative;overflow:hidden;
+  backdrop-filter:blur(10px);
+  transition:border-color .3s,box-shadow .3s;
+}
+.cc:hover{border-color:var(--border-h);box-shadow:0 0 20px rgba(0,255,240,0.06);}
+.cc::before,.cc::after{
+  content:'';position:absolute;width:12px;height:12px;
+  border-color:var(--cyan);border-style:solid;opacity:0.3;
+  transition:opacity .3s;
+}
+.cc::before{top:-1px;left:-1px;border-width:1px 0 0 1px;}
+.cc::after{bottom:-1px;right:-1px;border-width:0 1px 1px 0;}
+.cc:hover::before,.cc:hover::after{opacity:0.7;}
+.cc .glow-line{
+  position:absolute;top:0;left:25%;right:25%;height:1px;
+  background:linear-gradient(90deg,transparent,var(--cyan),transparent);
+  opacity:0.3;
+}
+.cc-title{
+  font-family:'Orbitron',monospace;font-size:9px;
+  text-transform:uppercase;letter-spacing:2px;color:var(--dim);
+  margin-bottom:16px;display:flex;align-items:center;gap:6px;
+}
+.cc-title .accent{color:var(--cyan);}
+
+/* === FORM === */
+.fg{margin-bottom:12px;}
+.fg label{
+  display:block;font-size:9px;text-transform:uppercase;
+  letter-spacing:1.5px;color:var(--dim);margin-bottom:6px;
+}
+.fg input,.fg select{
+  width:100%;background:rgba(0,0,0,0.5);
+  border:1px solid var(--border);border-radius:4px;
+  padding:11px 14px;color:var(--bright);
+  font-family:'JetBrains Mono',monospace;font-size:13px;outline:none;
+  transition:all .2s;
+}
+.fg input:focus,.fg select:focus{
+  border-color:var(--cyan);box-shadow:0 0 10px rgba(0,255,240,0.1);
+}
+select{
+  appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%235a5a7a'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 12px center;padding-right:32px;
+}
+select option{background:#0a0a1a;color:var(--bright);}
+.fr{display:flex;gap:8px;}
+.fr .fg{flex:1;}
+.fr .fg.small{flex:0 0 100px;}
+
+/* === BUTTONS === */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;
+  padding:10px 18px;border-radius:4px;border:none;
+  color:var(--bright);font-family:'JetBrains Mono',monospace;
+  font-size:10px;cursor:pointer;transition:all .2s;
+  text-decoration:none;gap:4px;font-weight:700;
+  text-transform:uppercase;letter-spacing:1px;
+  position:relative;overflow:hidden;
+}
+.btn::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,0.05),transparent);
+  opacity:0;transition:opacity .2s;
+}
+.btn:hover::before{opacity:1;}
+.btn:active{transform:scale(0.97);}
+.btn-c{background:rgba(0,255,240,0.12);color:var(--cyan);border:1px solid rgba(0,255,240,0.3);}
+.btn-c:hover{background:rgba(0,255,240,0.2);box-shadow:0 0 15px rgba(0,255,240,0.3);}
+.btn-g{background:rgba(57,255,20,0.12);color:var(--green);border:1px solid rgba(57,255,20,0.3);}
+.btn-g:hover{background:rgba(57,255,20,0.2);box-shadow:0 0 15px rgba(57,255,20,0.3);}
+.btn-r{background:rgba(255,0,64,0.12);color:var(--red);border:1px solid rgba(255,0,64,0.3);}
+.btn-r:hover{background:rgba(255,0,64,0.2);box-shadow:0 0 15px rgba(255,0,64,0.3);}
+.btn-fw{width:100%;justify-content:center;}
+.btn-sm{padding:6px 12px;font-size:9px;}
+.btn:disabled{opacity:0.3;cursor:not-allowed;transform:none;box-shadow:none;}
+
+/* === PAYLOAD BOX === */
+.box{
+  background:rgba(0,0,0,0.6);border:1px solid var(--border);
+  border-radius:4px;padding:14px;font-size:11px;
+  color:var(--green);word-break:break-all;max-height:250px;
+  overflow-y:auto;line-height:1.6;margin:10px 0;
+  font-family:'Share Tech Mono',monospace;
+}
+.box::-webkit-scrollbar{width:4px;}
+.box::-webkit-scrollbar-thumb{background:rgba(0,255,240,0.2);border-radius:4px;}
+
+/* === WARNING BOX === */
+.warn{
+  background:rgba(255,0,64,0.05);border-left:3px solid var(--red);
+  padding:12px 14px;font-size:10px;border-radius:4px;color:var(--dim);
+  margin-top:10px;line-height:1.5;
+}
+.warn strong{color:var(--cyan);}
+
+/* === INLINE LISTENER === */
+.lc{margin-top:0;}
+.lh{
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  padding:12px 14px;border-bottom:1px solid var(--border);font-size:10px;
+}
+.lh .st{display:flex;align-items:center;gap:6px;margin-right:auto;}
+.lh .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.lh .dot.idle{background:var(--dim);}
+.lh .dot.listen{background:var(--yellow);animation:pl 1s infinite;}
+.lh .dot.conn{background:var(--green);box-shadow:0 0 6px var(--green);}
+.lh .dot.err{background:var(--red);}
+.lh input{
+  width:80px;background:rgba(0,0,0,0.5);
+  border:1px solid var(--border);border-radius:4px;
+  padding:7px 10px;color:var(--bright);
+  font-family:'JetBrains Mono',monospace;font-size:12px;outline:none;
+}
+.lh input:focus{border-color:var(--cyan);}
+@keyframes pl{0%,100%{opacity:1;}50%{opacity:0.3;}}
+.lterm{
+  background:rgba(0,0,0,0.7);height:260px;overflow-y:auto;
+  padding:12px;font-size:11px;line-height:1.6;
+  font-family:'Share Tech Mono',monospace;
+  border:1px solid var(--border);border-radius:4px;margin:8px 0;
+}
+.lterm::-webkit-scrollbar{width:4px;}
+.lterm::-webkit-scrollbar-thumb{background:rgba(255,0,255,0.2);border-radius:4px;}
+.lterm .ln{white-space:pre-wrap;word-break:break-all;padding:1px 0;}
+.lterm .ln.sys{color:var(--yellow);}
+.lterm .ln.out{color:var(--green);}
+.lterm .ln.err{color:var(--red);}
+.lterm .ln.inp{color:var(--cyan);}
+.lterm .ln.inp::before{content:'> ';color:var(--magenta);font-weight:700;}
+.lir{display:flex;border-top:1px solid var(--border);border-radius:0 0 4px 4px;overflow:hidden;}
+.lir input{
+  flex:1;background:rgba(0,0,0,0.5);border:none;
+  padding:10px 12px;color:var(--bright);
+  font-family:'JetBrains Mono',monospace;font-size:12px;outline:none;
+}
+.lir input:focus{background:rgba(0,0,0,0.7);}
+.lir button{
+  border:none;padding:10px 18px;font-family:'JetBrains Mono',monospace;
+  font-size:10px;cursor:pointer;font-weight:700;
+  background:rgba(0,255,240,0.1);color:var(--cyan);
+  border-left:1px solid var(--border);text-transform:uppercase;
+  letter-spacing:1px;transition:all .2s;
+}
+.lir button:hover{background:rgba(0,255,240,0.2);}
+.lir button:active{transform:scale(0.97);}
+.lir button:disabled{opacity:0.3;cursor:not-allowed;transform:none;}
+
+/* === ONELINER === */
+.ol{
+  border:1px solid rgba(57,255,20,0.2);border-radius:8px;
+  background:rgba(57,255,20,0.02);padding:16px;margin-top:0;
+  position:relative;
+}
+.ol::before{
+  content:'C2 IMPLANT';position:absolute;top:-9px;left:16px;
+  background:var(--bg);padding:0 8px;
+  font-family:'Orbitron',monospace;font-size:8px;color:var(--green);
+  letter-spacing:2px;
+}
+.ol .d{font-size:10px;color:var(--dim);margin-bottom:10px;line-height:1.5;}
+.ol .o{
+  background:rgba(0,0,0,0.6);border:1px solid rgba(57,255,20,0.2);
+  border-radius:4px;padding:12px;font-size:10px;color:var(--green);
+  word-break:break-all;margin-bottom:10px;
+  font-family:'Share Tech Mono',monospace;
+}
+.ol .s{font-size:10px;color:var(--dim);line-height:1.6;}
+.ol .s strong{color:var(--green);}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-logo" id="hdrLogoEl">&#9760;</div>
+  <div class="topbar-title">SHELLS <small>Generator</small></div>
+  <a href="/" class="topbar-back">&#8592; C2 DASHBOARD</a>
+</div>
+
+<div class="split">
+  <!-- LEFT: Generator -->
+  <div>
+    <div class="cc">
+      <div class="glow-line"></div>
+      <div class="cc-title"><span class="accent">&#9670;</span> Shell Generator</div>
+      <div class="fr">
+        <div class="fg">
+          <label>IP / Host</label>
+          <input type="text" id="lhost" value="127.0.0.1" placeholder="IP">
+        </div>
+        <div class="fg small">
+          <label>Port</label>
+          <input type="number" id="lport" value="4444" placeholder="4444">
+        </div>
+      </div>
+      <div class="fg">
+        <label>Language</label>
+        <select id="langSelect">
+          <optgroup label="Linux / Unix">
+            <option value="bash_tcp">Bash /dev/tcp</option>
+            <option value="nc_traditional">Netcat (traditional -e)</option>
+            <option value="nc_mkfifo">Netcat (mkfifo, no -e)</option>
+            <option value="socat">Socat</option>
+            <option value="perl">Perl</option>
+            <option value="ruby">Ruby</option>
+            <option value="python3" selected>Python3</option>
+          </optgroup>
+          <optgroup label="Windows">
+            <option value="powershell_plain">PowerShell</option>
+            <option value="ncat_ssl">Ncat + SSL</option>
+            <option value="csharp">C#</option>
+          </optgroup>
+          <optgroup label="Other">
+            <option value="php_exec">PHP (exec)</option>
+            <option value="nodejs">Node.js</option>
+            <option value="java">Java</option>
+          </optgroup>
+        </select>
+      </div>
+      <div class="box" id="payloadDisplay">Select options</div>
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-r btn-sm" style="flex:1;" onclick="generate()">Generate</button>
+        <button class="btn btn-c btn-sm" style="flex:1;" id="copyBtn" onclick="copyPayload()">Copy</button>
+      </div>
+      <div class="warn">
+        <strong>These one-liners are unencrypted.</strong> They speak a raw shell
+        over TCP, not the CYB3 protocol &mdash; use them only where that is acceptable.<br>
+        <strong>For encrypted C2</strong> &rarr; build the Linux implant in the
+        <a href="/builder" style="color:var(--cyan);">Builder</a> and deploy it with the one-liner above.<br>
+        <strong>Standard shells</strong> &rarr; use <code style="color:var(--green);">nc -lvnp &lt;PORT&gt;</code>
+      </div>
+    </div>
+
+    <div class="cc ol">
+      <div class="d">Deploy the <strong style="color:var(--green);">C2 Linux implant</strong> via one-liner.</div>
+      <div class="o" id="onelinerDisplay">Click refresh</div>
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-g btn-sm" style="flex:1;" onclick="refreshOL()">&#8635; Refresh</button>
+        <button class="btn btn-c btn-sm" style="flex:1;" onclick="copyOL()">Copy</button>
+      </div>
+      <div class="s" style="margin-top:10px;">
+        <strong>1.</strong> Build Linux payload in <a href="/builder" style="color:var(--cyan);text-decoration:none;border-bottom:1px solid rgba(0,255,240,0.3);">Builder</a><br>
+        <strong>2.</strong> Run one-liner on target<br>
+        <strong>3.</strong> Implant connects on port <span id="c2pDisplay" style="color:var(--cyan);">7777</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Inline Listener -->
+  <div>
+    <div class="cc lc">
+      <div class="glow-line"></div>
+      <div class="cc-title"><span class="accent">&#9670;</span> Inline Listener</div>
+      <div class="lh">
+        <div class="st">
+          <span class="dot idle" id="listenerDot"></span>
+          <span id="listenerStatus">Stopped</span>
+        </div>
+        <input type="number" id="listenerPort" value="4444" placeholder="port">
+        <button class="btn btn-g btn-sm" id="listenerToggle" onclick="toggleListener()">Start</button>
+      </div>
+      <div class="lterm" id="listenerTerminal"><div class="ln sys">[ idle ]</div></div>
+      <div class="lir">
+        <input type="text" id="listenerInput" placeholder="type command..." disabled onkeydown="if(event.key==='Enter')sendLI()">
+        <button id="listenerSendBtn" disabled onclick="sendLI()">Send</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+async function api(url,opts){try{const r=await fetch(url,opts);return await r.json()}catch{return null}}
+
+const LHOST=document.getElementById('lhost'),LPORT=document.getElementById('lport'),LANG=document.getElementById('langSelect');
+const DISPLAY=document.getElementById('payloadDisplay'),COPY=document.getElementById('copyBtn'),ONELINER=document.getElementById('onelinerDisplay');
+
+async function generate(){
+  const ip=LHOST.value.trim()||'127.0.0.1',port=parseInt(LPORT.value)||4444,lang=LANG.value;
+  const d=await api(`/api/shells?ip=${ip}&port=${port}&lang=${lang}`);
+  if(d&&d.payload)DISPLAY.textContent=d.payload;
+}
+LHOST.addEventListener('input',generate);LPORT.addEventListener('input',generate);LANG.addEventListener('change',generate);
+(async()=>{
+  const ng=await api('/api/ngrok/status');
+  if(ng&&ng.running&&ng.host){LHOST.value=ng.host;LPORT.value=ng.port;}
+  generate();
+})();
+
+async function copyPayload(){
+  const t=DISPLAY.textContent;if(!t||t.includes('Select'))return;
+  try{await navigator.clipboard.writeText(t);COPY.textContent='Copied!';setTimeout(()=>COPY.textContent='Copy',1500)}catch{}
+}
+
+async function refreshOL(){
+  const d=await api('/api/shells/oneliner');
+  if(d){ONELINER.textContent=d.payload;document.getElementById('c2pDisplay').textContent=d.c2_port;}
+}
+refreshOL();
+async function copyOL(){try{await navigator.clipboard.writeText(ONELINER.textContent)}catch{}}
+
+// inline listener
+let lr=false,lp=null,loc=0;
+const LTERM=document.getElementById('listenerTerminal'),LDOT=document.getElementById('listenerDot');
+const LSTATUS=document.getElementById('listenerStatus'),LTOGGLE=document.getElementById('listenerToggle');
+const LPORT_IN=document.getElementById('listenerPort'),LINPUT=document.getElementById('listenerInput'),LSEND=document.getElementById('listenerSendBtn');
+
+function log(type,text){const d=document.createElement('div');d.className='ln '+type;d.textContent=text;LTERM.appendChild(d);LTERM.scrollTop=LTERM.scrollHeight;}
+
+async function toggleListener(){if(lr){await stopL()}else{await startL()}}
+
+async function startL(){
+  const port=parseInt(LPORT_IN.value)||4444;
+  const r=await api('/api/shell-listener/start',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({port})});
+  if(r&&r.error){log('err','[!] '+r.error);return}
+  lr=true;loc=0;LTERM.innerHTML='';
+  log('sys','[*] Listening on 0.0.0.0:'+port);
+  LTOGGLE.textContent='Stop';LTOGGLE.className='btn btn-r btn-sm';
+  LDOT.className='dot listen';LSTATUS.textContent='Listening';
+  LPORT_IN.disabled=true;log('sys','[*] Waiting...');
+  lp=setInterval(pollL,500);
+}
+
+async function stopL(){
+  const port=parseInt(LPORT_IN.value)||4444;
+  await api('/api/shell-listener/stop',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({port})});
+  lr=false;if(lp){clearInterval(lp);lp=null}
+  LTOGGLE.textContent='Start';LTOGGLE.className='btn btn-g btn-sm';
+  LDOT.className='dot idle';LSTATUS.textContent='Stopped';
+  LPORT_IN.disabled=false;LINPUT.disabled=true;LSEND.disabled=true;
+  log('sys','[*] Stopped');
+}
+
+async function pollL(){
+  const port=parseInt(LPORT_IN.value)||4444;
+  const d=await api(`/api/shell-listener/output?port=${port}&since=${loc}`);
+  if(!d)return;
+  for(const i of d.output){
+    if(i.type==='output')log('out',i.data);
+    else if(i.type==='system')log('sys',i.data);
+    else if(i.type==='error')log('err',i.data);
+  }
+  loc=d.count;
+  if(d.connected){LDOT.className='dot conn';LSTATUS.textContent='Connected';LINPUT.disabled=false;LSEND.disabled=false;LINPUT.focus();}
+  else if(lr){LDOT.className='dot listen';LSTATUS.textContent='Listening';LINPUT.disabled=true;LSEND.disabled=true;}
+}
+
+async function sendLI(){
+  const port=parseInt(LPORT_IN.value)||4444,text=LINPUT.value.trim();
+  if(!text)return;LINPUT.value='';log('inp',text);
+  await api('/api/shell-listener/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({port,text})});
+}
+
+async function loadAssets(){
+  const d=await api('/api/settings');if(!d)return;
+  if(d.bg){document.body.style.backgroundImage=`url(${d.bg}?t=${Date.now()})`;document.body.style.backgroundSize='cover';document.body.style.backgroundPosition='center';document.body.style.backgroundAttachment='fixed';document.body.classList.add('has-bg');}
+  if(d.logo){document.getElementById('hdrLogoEl').innerHTML=`<img src="${d.logo}?t=${Date.now()}" alt="logo">`;}
+}
+loadAssets();
+</script>
+</body>
+</html>

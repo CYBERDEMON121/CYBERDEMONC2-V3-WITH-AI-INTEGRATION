@@ -1,0 +1,82 @@
+{
+  "8d917be8": {
+    "id": "8d917be8",
+    "addr": "192.168.227.1:64042",
+    "ip": "192.168.227.1",
+    "ip_key": "192.168.227.1",
+    "connected": false,
+    "first_seen": "2026-09-27T05:03:47.402232",
+    "last_seen": 1790584930.2454464,
+    "history": [],
+    "info": {
+      "host": "DESKTOP-A4IPPU2",
+      "user": "demon",
+      "os": "Windows 10.0 build 19045",
+      "arch": "x64",
+      "cpu": "AMD Ryzen 5 7535HS with Radeon Graphics",
+      "cores": "12",
+      "mem_total": "15.21 GB",
+      "mem_avail": "1.50 GB",
+      "ip": "192.168.227.1",
+      "cwd": "C:\\Users\\demon\\Downloads"
+    },
+    "last_cmd": {
+      "cmd": "whoami",
+      "time": "04:33:22"
+    }
+  },
+  "4b84b15b": {
+    "id": "4b84b15b",
+    "addr": "127.0.0.1:41936",
+    "ip": "127.0.0.1",
+    "ip_key": "127.0.0.1",
+    "connected": true,
+    "first_seen": "2026-09-28T05:05:57.967587",
+    "last_seen": 1790587466.9990067,
+    "history": [
+      {
+        "cmd": "whoami",
+        "time": "05:24:25"
+      }
+    ],
+    "info": {
+      "host": "DESKTOP-A4IPPU2",
+      "user": "demon",
+      "os": "Windows 10.0 build 19045",
+      "arch": "x64",
+      "cpu": "AMD Ryzen 5 7535HS with Radeon Graphics",
+      "cores": "12",
+      "mem_total": "15.21 GB",
+      "mem_avail": "1.95 GB",
+      "ip": "192.168.43.67",
+      "cwd": "C:\\Users\\demon\\Downloads"
+    },
+    "last_cmd": {
+      "cmd": "whoami",
+      "time": "05:24:25"
+    }
+  },
+  "4b84b15b_2": {
+    "id": "4b84b15b_2",
+    "addr": "127.0.0.1:40642",
+    "ip": "127.0.0.1",
+    "ip_key": "127.0.0.1",
+    "connected": true,
+    "first_seen": "2026-09-28T05:28:00.264778",
+    "last_seen": 1790587681.6128013,
+    "history": [],
+    "info": {
+      "host": "NILAMATHI",
+      "user": "ELCOT",
+      "os": "Windows 10.0 build 26200",
+      "arch": "x64",
+      "cpu": "AMD Ryzen 3 7320U with Radeon Graphics",
+      "cores": "8",
+      "mem_total": "7.24 GB",
+      "mem_avail": "0.95 GB",
+      "ip": "192.168.43.166",
+      "cwd": "C:\\Users\\ELCOT\\Downloads"
+    },
+    "last_cmd": null
+  }
+}

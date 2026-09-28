@@ -1,0 +1,4 @@
+# built by run_tests.sh
+proto_emit
+crypto_selftest
+proto_selftest

